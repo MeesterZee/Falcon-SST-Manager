@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Falcon Enrollment</title>
+
+  <!-- Google Fonts: Roboto -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+    rel="stylesheet">
+
+  <!-- Bootstrap Icons v1.11.3 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- PDF Make v0.2.12 -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js'></script>
+
+  <!-- Custom libraries -->
+  <?!= include('falcon-ui.lib'); ?>
+  <?!= include('falcon-themes.lib'); ?>
+  <?!= include('falcon-sounds.lib'); ?>
+  <?!= include('falcon-pdf.lib'); ?>
+
+  <!-- Import user settings from properties service -->
+  <script>
+    let USER_SETTINGS = JSON.parse('<?= userSettings ?>'); // Inject user settings
+  </script>
+</head>
+
+<body>
+  <div id="loading-indicator"></div>
+  <div id="modal-container"></div>
+
+  {{NAVBAR}}
+  <div class="tool-bar" id="toolbar">
+    <button class="tool-bar-button" id="saveChangesButton">
+      <i class="bi bi-cloud-download"></i>Save
+    </button>
+    <div class="dropdown">
+      <button class="dropdown-button" id="studentButton"><i class="bi bi-person-vcard"></i>Profile</button>
+      <div class="dropdown-content">
+        <button id="addStudentButton"><i class="bi bi-plus-circle"></i>Add student</button>
+        <button id="removeStudentButton"><i class="bi bi-dash-circle"></i>Remove student</button>
+        <button id="restoreStudentButton" style="display: none"><i class="bi bi-arrow-counterclockwise"></i>Restore student</button>
+        <button id="deleteStudentButton" style="display: none"><i class="bi bi-trash3"></i>Delete student</button>
+        <button id="renameStudentButton"><i class="bi bi-pencil"></i>Rename student</button>
+      </div>
+    </div>
+    <div class="dropdown">
+      <button class="dropdown-button" id="meetingButton"><i class="bi bi-journal-text"></i>Meeting</button>
+      <div class="dropdown-content">
+        <button id="addMeetingButton"><i class="bi bi-plus-circle"></i>Add meeting</button>
+        <button id="deleteMeetingButton"><i class="bi bi-trash3"></i>Delete meeting</button>
+      </div>
+    </div>
+    <button class="tool-bar-button" id="emailButton">
+      <i class="bi bi-envelope"></i>Email
+    </button>
+    <div class="dropdown">
+      <button class="dropdown-button" id="exportButton"><i class="bi bi-box-arrow-up"></i>Export</button>
+      <div class="dropdown-content">
+        <button id="exportMeetingButton"><i class="bi bi-file-earmark-text"></i>Meeting summary</button>
+        <button id="exportDataButton"><i class="bi bi-database"></i>App data</button>
+      </div>
+    </div>
+    <button class="tool-bar-button" id="archiveButton"><i class="bi bi-archive"></i>Archive</button>
+    <button class="tool-bar-button" id="backButton" style="display: none"><i class="bi bi-arrow-left-circle"></i>Back</button>
+  </div>
+
+  <div id="toast-container"></div>
+  
+  <div class="column-container" id="page">
+    <!-- STUDENT INFORMATION COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Student Profile</h2>
+      </div>
+      <div class="column-body">
+        <div class="warning" style="display: none; margin-top: 15px;" id="profileWarning">
+          <i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>
+          <b>No students found!</b>
+        </div>
+        <div id="profileDataTable">
+        <h3>Profile Search</h3>
+        <div class="search-container" style="margin-top: 0; margin-bottom: 10px;">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" id="profileSearch" placeholder="Search...">
+        </div>
+        <h3>Basic Information</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">Student name:</td>
+              <td class="td2">
+                <select class="table-select" id="studentName">
+                  <!-- Populate on load -->
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Gender:</td>
+              <td class="td2">
+                <select class="table-select" id="gender">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Date of birth:</td>
+              <td class="td2"><input class="table-input" type="date" id="dateOfBirth"></td>
+            </tr>
+            <tr>
+              <td class="td2">Grade:</td>
+              <td class="td2">
+                <select class="table-select" id="grade">
+                  <option value="TK">TK</option>
+                  <option value="K">K</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Classroom/teacher:</td>
+              <td class="td2">
+                <select class="table-select" id="classroom">
+                  <!-- Populate on load -->
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Allergies:</td>
+              <td class="td2"><input class="table-input" type="text" id="allergies"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">Medications:</td>
+              <td class="td2"><input class="table-input" type="text" id="medications"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">Dietary restrictions:</td>
+              <td class="td2"><input class="table-input" type="text" id="dietaryRestrictions"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">Services/programs:</td>
+              <td class="td2"><input class="table-input" type="text" id="servicesPrograms"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">Specialized instruction:</td>
+              <td class="td2">
+                <select class="table-select" id="specializedInstruction">
+                  <option value="None">None</option>
+                  <option value="504">504</option>
+                  <option value="IEP">IEP</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Case manager:</td>
+              <td class="td2"><input class="table-input" type="text" id="caseManager"></td>
+            </tr>
+          </table>
+        </div>
+        <h3>Release Of Information</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">ROI organization:</td>
+              <td class="td2"><input class="table-input" type="text" id="roi1"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">ROI organization:</td>
+              <td class="td2"><input class="table-input" type="text" id="roi2"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">ROI organization:</td>
+              <td class="td2"><input class="table-input" type="text" id="roi3"></input></td>
+            </tr>
+            </table>
+        </div>
+        <h3>Parent/Guardian Information</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">Parent/guardian name:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianName1"></td>
+            </tr>
+            <tr>
+              <td class="td2">Parent/guardian phone:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianPhone1"></td>
+            </tr>
+            <tr>
+              <td class="td2">Parent/guardian email:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianEmail1"></td>
+            </tr>
+          </table>
+        </div>
+        <h3>Parent/Guardian Information</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">Parent/guardian name:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianName2"></td>
+            </tr>
+            <tr>
+              <td class="td2">Parent/guardian phone:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianPhone2"></td>
+            </tr>
+            <tr>
+              <td class="td2">Parent/guardian email:</td>
+              <td class="td2"><input class="table-input" type="text" id="parentGuardianEmail2"></td>
+            </tr>
+          </table>
+        </div>
+        <h3>Notes</h3>
+        <textarea class="column-textarea" id="notes"></textarea>
+      </div>
+      </div>
+    </div>
+
+    <!-- MEETINGS COLUMN -->
+    <div class="column">
+      <div class="column-header">
+        <h2>Student Meetings</h2>
+      </div>
+      <div class="column-body">
+        <div class="warning" style="margin-top: 15px;" id="meetingWarning">
+          <i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>
+          <b>No meetings found!</b>
+        </div>
+        <div id="meetingDataTable">
+        <h3>Meeting Dates</h3>
+        <select class="column-select" id="meetingName"></select>
+        <h3>Meeting Information</h3>
+        <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">Date:</td>
+              <td class="td2"><input class="table-input" type="date" id="meetingDate"></td>
+            </tr>
+            <tr>
+              <td class="td2">Type:</td>
+              <td class="td2">
+                <select class="table-select" id="meetingType">
+                  <option value="Initial">Initial</option>
+                  <option value="Check-in">Check-in</option>
+                  <option value="End of Year">End of year</option>
+                  <option value="Consultation">Consultation</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Attendees:</td>
+              <td class="td2"><input class="table-input" type="text" id="attendees"></td>
+            </tr>
+            <tr>
+              <td class="td2">Facilitator:</td>
+              <td class="td2"><input class="table-input" type="text" id="facilitator"></td>
+            </tr>
+            <tr>
+              <td class="td2">Scribe:</td>
+              <td class="td2"><input class="table-input" type="text" id="scribe"></td>
+            </tr>
+          </table>
+        </div>
+        <h3>Student Strengths</h3>
+        <textarea class="column-textarea" id="strengthsInput"></textarea>
+        <h3>Student Concerns</h3>
+        <textarea class="column-textarea" id="concernsInput"></textarea>
+        <h3>Student Action Plan</h3>
+        <textarea class="column-textarea" id="actionPlanInput"></textarea>
+        <h3>Schedule Meeting</h3>
+        <div class="table-wrapper" style="margin-top: 10px">
+          <table>
+            <tr>
+              <td class="td2">Next meeting date:</td>
+              <td class="td2"><input class="table-input" type="date" id="nextDate"></td>
+            </tr>
+            <tr>
+              <td class="td2">Next meeting time:</td>
+              <td class="td2"><input class="table-input" type="time" id="nextTime"></td>
+            </tr>
+          </table>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- ADD STUDENT MODAL -->
+    <div class="modal-html" id="addStudentModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Add Student
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>Basic Information</h3>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <td class="td2">Student first name:</td>
+                <td class="td2"><input class="table-input" type="text" id="addFirstName"></select></td>
+              </tr>
+              <tr>
+                <td class="td2">Student last name:</td>
+                <td class="td2"><input class="table-input" type="text" id="addLastName"></td>
+              </tr>
+              <tr>
+                <td class="td2">Gender:</td>
+                <td class="td2">
+                  <select class="table-select" id="addGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Date of birth:</td>
+                <td class="td2"><input class="table-input" type="date" id="addDateOfBirth"></td>
+              </tr>
+              <tr>
+                <td class="td2">Grade:</td>
+                <td class="td2">
+                  <select class="table-select" id="addGrade">
+                    <option value="TK">TK</option>
+                    <option value="K">K</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Classroom/teacher:</td>
+                <td class="td2">
+                  <select class="table-select" id="addClassroom">
+                    <!-- Populate on load -->
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Allergies:</td>
+                <td class="td2"><input class="table-input" type="text" id="addAllergies"></td>
+              </tr>
+              <tr>
+                <td class="td2">Medications:</td>
+                <td class="td2"><input class="table-input" type="text" id="addMedications"></td>
+              </tr>
+              <tr>
+                <td class="td2">Dietary restrictions:</td>
+                <td class="td2"><input class="table-input" type="text" id="addDietaryRestrictions"></td>
+              </tr>
+              <tr>
+                <td class="td2">Services/programs:</td>
+                <td class="td2"><input class="table-input" type="text" id="addServicesPrograms"></td>
+              </tr>
+              <tr>
+                <td class="td2">Specialized instruction:</td>
+                <td class="td2">
+                  <select class="table-select" id="addSpecializedInstruction">
+                    <option value="None">None</option>
+                    <option value="504">504</option>
+                    <option value="IEP">IEP</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Case manager:</td>
+                <td class="td2"><input class="table-input" type="text" id="addCaseManager"></td>
+              </tr>
+            </table>
+          </div>
+          <h3>Release Of Information</h3>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <td class="td2">ROI organization:</td>
+                <td class="td2"><input class="table-input" type="text" id="addROI1"></td>
+              </tr>
+              <tr>
+                <td class="td2">ROI organization:</td>
+                <td class="td2"><input class="table-input" type="text" id="addROI2"></td>
+              </tr>
+              <tr>
+                <td class="td2">ROI organization:</td>
+                <td class="td2"><input class="table-input" type="text" id="addROI3"></td>
+              </tr>
+            </table>
+          </div>
+          <h3>Parent/Guardian Information</h3>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <td class="td2">Parent/guardian name:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianName1"></td>
+              </tr>
+              <tr>
+                <td class="td2">Parent/guardian phone:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianPhone1"></td>
+              </tr>
+              <tr>
+                <td class="td2">Parent/guardian email:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianEmail1"></td>
+              </tr>
+            </table>
+          </div>
+          <h3>Parent/Guardian Information</h3>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <td class="td2">Parent/guardian name:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianName2"></td>
+              </tr>
+              <tr>
+                <td class="td2">Parent/guardian phone:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianPhone2"></td>
+              </tr>
+              <tr>
+                <td class="td2">Parent/guardian email:</td>
+                <td class="td2"><input class="table-input" type="text" id="addParentGuardianEmail2"></td>
+              </tr>
+            </table>
+          </div>          
+        <div class="modal-htmlbutton">
+          <button id="addStudentModalButton">Add Student</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RENAME MODAL -->
+    <div class="modal-html" id="renameStudentModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Rename Student
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3 id="currentStudentName"></h3>
+          <label class="block-label" for="renameFirst">New first name:</label>
+          <input class="column-input" style="margin-bottom: 10px;" type="text" id="renameFirst">
+          <label class="block-label" for="renameLast">New last name:</label>
+          <input class="column-input" type="text" id="renameLast">
+          <div class="modal-htmlbutton">
+            <button id="renameStudentModalButton">Rename Student</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- ADD MEETING MODAL -->
+    <div class="modal-html" id="addMeetingModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Add Meeting
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>Meeting Information</h3>
+          <div class="table-wrapper">
+          <table>
+            <tr>
+              <td class="td2">Date:</td>
+              <td class="td2"><input class="table-input" type="date" id="addMeetingDate"></td>
+            </tr>
+            <tr>
+              <td class="td2">Type:</td>
+              <td class="td2">
+                <select class="table-select" id="addMeetingType">
+                  <option value="Initial">Initial</option>
+                  <option value="Check-in">Check-in</option>
+                  <option value="End of Year">End of year</option>
+                  <option value="Consultation">Consultation</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td class="td2">Attendees:</td>
+              <td class="td2"><input class="table-input" type="text" id="addAttendees"></td>
+            </tr>
+            <tr>
+              <td class="td2">Facilitator:</td>
+              <td class="td2"><input class="table-input" type="text" id="addFacilitator"></td>
+            </tr>
+            <tr>
+              <td class="td2">Scribe:</td>
+              <td class="td2"><input class="table-input" type="text" id="addScribe"></td>
+            </tr>
+          </table>
+        </div>
+          <div class="modal-htmlbutton">
+            <button id="addMeetingModalButton">Add Meeting</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- EMAIL MODAL -->
+    <div class="modal-html" id="emailModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Compose Email
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>Templates</h3>
+          <label class="block-label" for="templateSelect">Select template:</label>
+          <select class="column-select" id="templateSelect">
+            <option value="none">None</option>
+            <option value="referral">Referral</option>
+            <option value="initial">Initial Meeting</option>
+            <option value="reminder">Meeting Reminder</option>
+            <option value="summary">Meeting Summary</option>
+          </select>
+          <div class="warning" style="margin-top: 10px; display: none;" id="templateWarning">
+            <i class="bi-exclamation-triangle-fill" style="color: var(--warning-color)"></i>
+            <b>Template data missing!</b>
+          </div>
+          <h3>Compose Email</h3>
+          <label class="block-label" for="emailRecipient">To:</label>
+          <input class="column-input" style="margin-bottom: 10px;" type="text" id="emailRecipient">
+          <label class="block-label" for="emailSubject">Subject:</label>
+          <input class="column-input" style="margin-bottom: 10px;" type="text" id="emailSubject">
+          <div class="label-text">Message:</div>
+          <div class="rich-text-box" contenteditable="true" id="emailBody"></div>
+          <div class="modal-htmlbutton">
+            <button id="sendEmailModalButton">Send Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT MEETING SUMMARY MODAL -->
+    <div class="modal-html" id="exportMeetingModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Export Meeting Summary
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>Meeting Dates</h3>
+          <label class="block-label" for="exportMeetingSelect">Select meeting:</label>
+          <select class="column-select" id="exportMeetingSelect">
+            <!-- Populate on load -->
+          </select>
+          <div class="modal-htmlbutton">
+            <button id="exportMeetingModalButton">Download Summary</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT DATA MODAL -->
+    <div class="modal-html" id="exportDataModal" >
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Export App Data
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>App Data Type</h3>
+          <label class="block-label" for="dataTypeSelect">Select data:</label>
+          <select class="column-select" id="dataTypeSelect" style="margin-bottom: 0">
+            <option value="activeData">Active student profile data</option>
+            <option value="archiveData">Archive student profile data</option>
+            <option value="meetingData">Meeting data</option>
+          </select>
+          <h3>File Type</h3>
+          <label class="block-label" for="fileTypeSelect">Select file type:</label>
+          <select class="column-select" id="fileTypeSelect" style="margin-bottom: 0">
+            <option value="csv">Comma Separated Values (.csv)</option>
+            <option value="xlsx">Microsoft Excel (.xlsx)</option>
+          </select>
+          <div class="modal-htmlbutton">
+            <button id="exportDataModalButton">Download Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="javascript-code">
+    <?!= include('dashboard.js'); ?>
+  </div>
+</body>
+
+</html>
