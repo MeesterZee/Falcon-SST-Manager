@@ -1,0 +1,86 @@
+<!-- FALCON SOUNDS LIBRARY v2.0 -->
+
+<!--  
+  Usage: 
+    - playNotificationSound(notificationType): Plays sound matching the argument for notificationType (alert, email, remove, success) from USER_SETTINGS
+    - saveSound(): Writes the sound settings to USER_SETTINGS
+-->
+
+<!-- JAVASCRIPT FUNCTIONS -->
+<script type="text/javascript">
+
+  const soundLibrary = {
+    // Alert    
+    alert01: new Audio('https://meesterzee.github.io/FalconEDU/audio/alert_error-01.wav'),
+    alert02: new Audio('https://meesterzee.github.io/FalconEDU/audio/alert_error-02.wav'),
+    alert03: new Audio('https://meesterzee.github.io/FalconEDU/audio/alert_error-03.wav'),
+    alert04: new Audio('https://meesterzee.github.io/FalconEDU/audio/icq-message.wav'),
+    
+    // Email
+    email01: new Audio('https://meesterzee.github.io/FalconEDU/audio/hero_simple-celebration-01.wav'),
+    email02: new Audio('https://meesterzee.github.io/FalconEDU/audio/hero_simple-celebration-02.wav'),
+    email03: new Audio('https://meesterzee.github.io/FalconEDU/audio/hero_simple-celebration-03.wav'),
+    email04: new Audio('https://meesterzee.github.io/FalconEDU/audio/hero_decorative-celebration-01.wav'),
+    email05: new Audio('https://meesterzee.github.io/FalconEDU/audio/hero_decorative-celebration-02.wav'),
+
+    // Remove/delete
+    remove01: new Audio('https://meesterzee.github.io/FalconEDU/audio/remove_trash.mp3'),
+    remove02: new Audio('https://meesterzee.github.io/FalconEDU/audio/remove_crunch.mp3'),
+    remove03: new Audio('https://meesterzee.github.io/FalconEDU/audio/remove_potato-chip.mp3'),
+
+    // Notification
+    success01: new Audio('https://meesterzee.github.io/FalconEDU/audio/notification_simple-01.wav'),
+    success02: new Audio('https://meesterzee.github.io/FalconEDU/audio/notification_simple-02.wav'),
+    success03: new Audio('https://meesterzee.github.io/FalconEDU/audio/notification_decorative-01.wav'),
+    success04: new Audio('https://meesterzee.github.io/FalconEDU/audio/notification_high-intensity.wav'),
+    success05: new Audio('https://meesterzee.github.io/FalconEDU/audio/notification_ambient.wav')
+  };
+
+  // Preload the sounds
+  for (const sound in soundLibrary) {
+    soundLibrary[sound].load();
+  }
+    
+  function saveSound() {
+    const alertSound = document.getElementById('alertSound').value;
+    const emailSound = document.getElementById('emailSound').value;
+    const removeSound = document.getElementById('removeSound').value;
+    const successSound = document.getElementById('successSound').value;
+    const silentMode = document.getElementById('silentModeSwitch').checked;
+    
+    USER_SETTINGS.alertSound = alertSound;
+    USER_SETTINGS.emailSound = emailSound;
+    USER_SETTINGS.removeSound = removeSound;
+    USER_SETTINGS.successSound = successSound;
+    USER_SETTINGS.silentMode = silentMode ? 'true' : 'false';
+  }
+  
+  function playNotificationSound(notificationType) {
+    const silentModeSetting = USER_SETTINGS.silentMode;
+
+    if (silentModeSetting === 'false') {
+      let sound;
+      
+      switch (notificationType) {
+        case "alert":
+          sound = USER_SETTINGS.alertSound;
+          break;
+        case "email":
+          sound = USER_SETTINGS.emailSound;
+          break;
+        case "remove":
+          sound = USER_SETTINGS.removeSound;
+          break;
+        case "success":
+          sound = USER_SETTINGS.successSound;
+          break;
+      }
+
+      soundLibrary[sound].currentTime = 0; // Reset to start
+      soundLibrary[sound].play();
+    } else {
+      return;
+    }
+  }
+  
+</script> 
