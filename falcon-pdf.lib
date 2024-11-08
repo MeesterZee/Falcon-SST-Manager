@@ -1,0 +1,183 @@
+<!-- PDF Make v0.2.12 -->
+<!-- Sizing in points, 1 inch = 72 points -->
+
+<script>
+  // Global Constants
+  const FORM_LOGO = 'https://meesterzee.github.io/FalconEDU/images/FLCSLogo_School_Flat.png';
+  
+  const FORM_HEADER = {
+    image: 'logo', // URL of the image
+    width: 96, // Set image width
+    alignment: 'center', // Align image
+    margin: [0, 28, 0, 0] // Adjust margin
+  };
+
+  /////////////////////
+  // MEETING SUMMARY //
+  /////////////////////
+
+  function createMeetingSummary() {
+    const meetingSummaryData = {
+      'Student Name': document.getElementById('studentName').options[document.getElementById('studentName').selectedIndex].text,
+      'Meeting Date': formatDate(document.getElementById('meetingDate').value),
+      'Meeting Type': document.getElementById('meetingType').value,
+      'Attendees': document.getElementById('attendees').value,
+      'Facilitator': document.getElementById('facilitator').value,
+      'Scribe': document.getElementById('scribe').value,
+      'Strengths': document.getElementById('strengthsInput').value,
+      'Concerns': document.getElementById('concernsInput').value,
+      'Action Plan': document.getElementById('actionPlanInput').value,
+      'Next Meeting Date': formatDate(document.getElementById('nextDate').value),
+      'Next Meeting Time': formatTime(document.getElementById('nextTime').value),
+    };
+
+    // Replace any empty values with 'N/A'
+    Object.keys(meetingSummaryData).forEach((key) => {
+      if (!meetingSummaryData[key]) {
+        meetingSummaryData[key] = 'N/A';
+      }
+    });
+
+    const docDefinition = {
+      pageSize: 'LETTER',
+      pageOrientation: 'portrait',
+      pageMargins: [36, 36, 36, 36], // Fixed margins for all pages
+
+      // Dynamic header that only shows on first page
+      header: function(currentPage, pageCount, pageSize) {
+        if (currentPage === 1) {
+          return [
+            FORM_HEADER,
+            { text: '', margin: [0, 40, 0, 0] } // Add extra space after header
+          ];
+        }
+        return null;
+      },
+
+      content: [
+        // Title section with extra top margin on first page
+        {
+          text: 'STUDENT SUCCESS TEAM - MEETING SUMMARY',
+          style: 'title',
+          margin: [0, 80, 0, 20] // Increased top margin to accommodate header
+        },
+        
+        // Meeting information header
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'MEETING INFORMATION', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+
+        // Meeting information table
+        {
+          table: {
+            widths: ['20%', '80%'],
+            body: [
+              [{ text: 'Student name:', bold: true }, { text: meetingSummaryData['Student Name'] }],
+              [{ text: 'Meeting date:', bold: true }, { text: meetingSummaryData['Meeting Date'] }],
+              [{ text: 'Meeting type:', bold: true }, { text: meetingSummaryData['Meeting Type'] }],
+              [{ text: 'Attendees:', bold: true }, { text: meetingSummaryData['Attendees'] }],
+              [{ text: 'Facilitator:', bold: true }, { text: meetingSummaryData['Facilitator'] }],
+              [{ text: 'Scribe:', bold: true }, { text: meetingSummaryData['Scribe'] }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Student strengths section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'STUDENT STRENGTHS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: meetingSummaryData['Strengths'], margin: [0, 5, 0, 15] },
+
+        // Student concerns section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'STUDENT CONCERNS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: meetingSummaryData['Concerns'], margin: [0, 5, 0, 15] },
+
+        // Action plan section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'STUDENT ACTION PLAN', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: meetingSummaryData['Action Plan'], margin: [0, 5, 0, 15] },
+
+        // Next meeting section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'NEXT SCHEDULED MEETING', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['20%', '80%'],
+            body: [
+              [{ text: 'Next meeting date:', bold: true }, { text: meetingSummaryData['Next Meeting Date'] }],
+              [{ text: 'Next meeting time:', bold: true }, { text: meetingSummaryData['Next Meeting Time'] }]
+            ]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 15]
+        }
+      ],
+
+      footer: function(currentPage, pageCount) {
+        return {
+          text: `2900 West Carson Street, Torrance, CA 90503 | (310) 320-9920 ext. 100 or ext. 106 | www.flfalcons.org | Page ${currentPage} of ${pageCount}`,
+          alignment: 'center',
+          bold: true,
+          margin: [0, 0, 0, 0],
+          fontSize: 9
+        };
+      },
+
+      defaultStyle: {
+        fontSize: 10,
+      },
+
+      styles: {
+        title: {
+          fontSize: 12,
+          bold: true,
+          alignment: 'center'
+        }
+      },
+
+      images: {
+        logo: { url: FORM_LOGO }
+      }
+    };
+
+    return docDefinition;
+  }
+
+</script>
