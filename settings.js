@@ -40,7 +40,7 @@
       console.log("Initialization complete!");
     
     } catch (error) {
-        console.error("Error during initialization: ", error);
+      console.error("Error during initialization: ", error);
     
     } finally {
       // Hide loading indicator and show page
@@ -270,28 +270,45 @@
 
   function saveSettings() {
     if (busyFlag) {
-      showError("operationInProgress");
+      showError("Error: OPERATION_IN_PROGRESS");
       busyFlag = false;
       return;
     }
 
+    showToast("", "Saving changes...", 5000);
     busyFlag = true;
-    saveChangesButton.classList.remove('tool-bar-button-unsaved');
+    
+    appSettings = getAppSettings();    
 
-    APP_SETTINGS = getAppSettings();
+    google.script.run
+      .withSuccessHandler(() => {
+        APP_SETTINGS = appSettings; // Save to global settings
+        
+        // Update the UI
+        saveTheme();
+        setColorPicker();
+        saveSound();
+        document.getElementById('header-text').innerText = "Falcon SST Manager - " + APP_SETTINGS.schoolSettings.schoolYear;
     
-    saveFlag = true;
-    saveTheme();
-    setColorPicker();
-    saveSound();
-    
-    document.getElementById('header-text').innerText = "Falcon SST Manager - " + APP_SETTINGS.schoolSettings.schoolYear;
-    
-    playNotificationSound("success");
-    showToast("", "Settings saved!", 5000);
-
-    google.script.run.writeSettings(USER_SETTINGS, APP_SETTINGS);
-    busyFlag = false;
+        saveChangesButton.classList.remove('tool-bar-button-unsaved');
+        playNotificationSound("success");
+        showToast("", "Settings saved!", 5000);
+        saveFlag = true;
+        busyFlag = false;
+      })
+      .withFailureHandler((error) => {
+        const errorString = String(error);
+        
+        if (errorString.includes("401")) {
+          sessionError();
+        } else {
+          showError("Error: SAVE_FAILURE");
+        }
+        
+        saveFlag = false;
+        busyFlag = false;
+      })
+    .writeSettings(USER_SETTINGS, appSettings);
   }
 
   function getAppSettings() {
@@ -351,22 +368,43 @@
   ///////////////////////
 
   function showError(errorType, callback = "") {
-    let icon = `<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>`;
+    let icon = `<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>`;
+    const errorIcon = `<i class="bi bi-x-circle-fill" style="color: var(--error-color); margin-right: 10px;"></i>`;
     let title;
     let message;
     let button1;
     let button2;
 
     switch (errorType) {
-      case "operationInProgress":
-        title = icon + "Error";
-        message = "Operation currently in progress. Please wait until the operation completes and try again.";
+      case "Error: OPERATION_IN_PROGRESS":
+        title = warningIcon + "Operation In Progress";
+        message = "Please wait until the operation completes and try again.";
+        button1 = "Close";
+        break;
+
+      case "Error: SAVE_FAILURE":
+        title = errorIcon + "Save Error";
+        message = "An unknown error occurred while saving the settings. The operation could not be completed.";
         button1 = "Close";
         break;
     }
 
     playNotificationSound("alert");
     showModal(title, message, button1, button2);
+  }
+
+  async function sessionError() {
+    const errorIcon = `<i class="bi bi-x-circle-fill" style="color: var(--error-color); margin-right: 10px;"></i>`;
+    const title = `${errorIcon}Session Expired`;
+    const message = "The current session has expired. Please sign in with Google and try again.";
+    
+    playNotificationSound("alert");
+    const buttonText = await showModal(title, message, "Cancel", "Sign in");
+       
+    if (buttonText === "Sign in") {
+      const signInUrl = "https://accounts.google.com";
+      const signInTab = window.open(signInUrl, "_blank");
+    }
   }
   
   function saveAlert() {
