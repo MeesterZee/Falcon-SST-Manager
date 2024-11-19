@@ -1,4 +1,4 @@
-/** Falcon SST Manager - Web App v1.3 **/
+/** Falcon SST Manager - Web App v1.7 **/
 /** Falcon EDU © 2023-2025 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
@@ -74,7 +74,7 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 1.3<br>Build: 11110724<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
+        const message = "Web App Version: 1.7<br>Build: 15111924<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
         showModal(title, message, "Close");
       }
     </script>
@@ -171,43 +171,51 @@ function saveStudentData(dataSet, studentData, meetingData) {
   // Cache frequently used values and references
   const studentID = studentData[0][0];
   const studentDataSheet = dataSet === "active" ? ACTIVE_STUDENT_DATA_SHEET : ARCHIVE_STUDENT_DATA_SHEET;
-  
+    
   // Get last row in one call
   const studentDataSheetLastRow = studentDataSheet.getLastRow();
-  if (studentDataSheetLastRow <= 1) return "missingDatabaseEntry";
-  
+  if (studentDataSheetLastRow <= 1) {
+    throw new Error('MISSING_STUDENT_DATA');
+  }
+    
   // Get all student data at once, including formatted values for dates, times, and IDs
   const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentData[0].length).getDisplayValues();
-  
+   
   // Find student index - now using formatted values throughout
   const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
-  
+    
   // Check for duplicates using the complete formatted dataset
   const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
-  if (duplicateCount > 1) return "duplicateDatabaseEntry";
-  if (studentIndex === -1) return "missingDatabaseEntry";
-  
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
+  if (studentIndex === -1) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
+    
   // Update student data in one operation
   studentDataSheet.getRange(studentIndex + 2, 1, 1, studentData[0].length).setValues(studentData);
-  
+    
   // Process meeting data if provided
   if (meetingData?.length > 0) {
     const meetingID = meetingData[0][0];
     const meetingSheetLastRow = MEETING_DATA_SHEET.getLastRow();
-    
+      
     if (meetingSheetLastRow > 1) {
       // Get all meeting data at once with formatted values
       const allMeetingData = MEETING_DATA_SHEET.getRange(2, 1, meetingSheetLastRow - 1, meetingData[0].length).getDisplayValues();
-      
+        
       const meetingIndex = allMeetingData.findIndex(row => row[0] === meetingID);
-      if (meetingIndex === -1) return "missingDatabaseEntry";
-      
+      if (meetingIndex === -1) {
+        throw new Error('MISSING_MEETING_ENTRY');
+      }
+        
       // Update meeting data in one operation
       MEETING_DATA_SHEET.getRange(meetingIndex + 2, 1, 1, meetingData[0].length).setValues(meetingData);
     }
   }
   
-  return "saveChangesSuccess";
+  return true;
 }
 
 /** Add student data **/
@@ -225,7 +233,7 @@ function addStudentData(studentData) {
       
     // Use indexOf for efficient duplicate checking
     if (studentIDs.indexOf(studentID) !== -1) {
-      return "duplicateDatabaseEntry";
+      throw new Error('DUPLICATE_ENTRY');
     }
   }
 
@@ -251,16 +259,22 @@ function addMeetingData(meetingData) {
   const meetingID = meetingData[0];
   const studentID = meetingData[1];  // Assuming student ID is second element
   const meetingLastRow = meetingSheet.getLastRow();
-  
+
   // First, validate that the student exists
   const studentLastRow = studentSheet.getLastRow();
+  
   if (studentLastRow > 1) {
     const studentIDs = studentSheet.getRange(2, 1, studentLastRow - 1, 1).getDisplayValues().flat();
+    const duplicateCount = studentIDs.filter(id => id === studentID).length;
+    
+    if (duplicateCount > 1) {
+      throw new Error('DUPLICATE_ENTRY'); // If more than one entry is found for the student ID
+    }
     if (studentIDs.indexOf(studentID) === -1) {
-      return "missingDatabaseEntry";
+      throw new Error('MISSING_STUDENT_ENTRY');
     }
   } else {
-    return "missingDatabaseEntry"; // If no students exist in the sheet
+    throw new Error('MISSING_STUDENT_DATA'); // If no students exist in the sheet
   }
   
   // Check for duplicates only if there's existing data
@@ -270,7 +284,7 @@ function addMeetingData(meetingData) {
       
     // Use indexOf for efficient duplicate checking
     if (meetingIDs.indexOf(meetingID) !== -1) {
-      return "duplicateDatabaseEntry";
+      throw new Error('DUPLICATE_ENTRY');
     }
   }
 
@@ -315,31 +329,32 @@ function removeStudentData(studentID) {
 
   // Early return if active data is empty
   if (activeLastRow <= 1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_DATA');
   }
 
   // Check for duplicate in archive if it has data
   if (archiveLastRow > 1) {
-    const archiveIDs = archiveSheet
-      .getRange(2, 1, archiveLastRow - 1, 1)
-      .getDisplayValues()
-      .flat();
+    const archiveIDs = archiveSheet.getRange(2, 1, archiveLastRow - 1, 1).getDisplayValues().flat();
 
     if (archiveIDs.indexOf(studentID) !== -1) {
-      return "duplicateDatabaseEntry";
+      throw new Error('DUPLICATE_ENTRY');
     }
   }
 
   // Get all active data in one batch operation
-  const activeData = activeSheet
-    .getRange(2, 1, activeLastRow - 1, lastColumn)
-    .getDisplayValues();
+  const activeData = activeSheet.getRange(2, 1, activeLastRow - 1, lastColumn).getDisplayValues();
+
+  // Check for duplicate in active data
+  const duplicateCount = activeData.filter(row => row[0] === studentID).length;
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
 
   // Find student index using more efficient find method
   const studentIndex = activeData.findIndex(row => row[0] === studentID);
 
   if (studentIndex === -1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_ENTRY');
   }
 
   // Cache the student data before removal
@@ -363,7 +378,7 @@ function removeStudentData(studentID) {
       .sort({ column: 2, ascending: true }); // Sort by Student Name (column 2)
   }
 
-  return "archiveSuccess";
+  return true;
 }
 
 /** Rename student in data **/
@@ -371,26 +386,36 @@ function renameStudent(dataSet, studentID, newStudentName) {
   const sheet = dataSet === "active" ? ACTIVE_STUDENT_DATA_SHEET : ARCHIVE_STUDENT_DATA_SHEET;
   const sheetLastRow = sheet.getLastRow();
   
-  if (sheetLastRow <= 1) return "missingDatabaseEntry";
+  if (sheetLastRow <= 1) {
+    throw new Error('MISSING_STUDENT_DATA');
+  }
 
   // Load all student data at once
   const studentDataRange = sheet.getRange(2, 1, sheetLastRow - 1, 2);
-  const studentData = studentDataRange.getValues();
+  const studentData = studentDataRange.getDisplayValues();
   
-  // Use find() instead of for loop
-  const foundStudentIndex = studentData.findIndex(row => row[0] == studentID);
+  // Find student index - now using formatted values throughout
+  const studentIndex = studentData.findIndex(row => row[0] === studentID);
+    
+  // Check for duplicates using the complete formatted dataset
+  const duplicateCount = studentData.filter(row => row[0] === studentID).length;
   
-  if (foundStudentIndex === -1) return "missingDatabaseEntry";
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
+  if (studentIndex === -1) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
 
   // Batch our writes into a single operation
   const operations = [];
   
   // Update student name in student sheet
   operations.push(() => {
-    sheet.getRange(foundStudentIndex + 2, 2).setValue(newStudentName);
+    sheet.getRange(studentIndex + 2, 2).setValue(newStudentName);
+    
     // Sort after update
-    sheet.getRange(2, 1, sheetLastRow - 1, sheet.getLastColumn())
-         .sort({ column: 2, ascending: true });
+    sheet.getRange(2, 1, sheetLastRow - 1, sheet.getLastColumn()).sort({ column: 2, ascending: true });
   });
 
   // Update meeting data sheet
@@ -416,8 +441,7 @@ function renameStudent(dataSet, studentID, newStudentName) {
         );
         
         // Use batch setValue for all matching rows
-        meetingSheet.getRangeList(ranges.map(r => r.getA1Notation()))
-                   .setValue(newStudentName);
+        meetingSheet.getRangeList(ranges.map(r => r.getA1Notation())).setValue(newStudentName);
       });
     }
   }
@@ -425,7 +449,7 @@ function renameStudent(dataSet, studentID, newStudentName) {
   // Execute all operations
   operations.forEach(op => op());
   
-  return "renameSuccess";
+  return true;
 }
 
 /** Restore student from archive data and add to active data **/
@@ -439,31 +463,32 @@ function restoreStudentData(studentID) {
 
   // Early return if archive data is empty
   if (archiveLastRow <= 1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_DATA');
   }
 
   // Check for duplicate in active data if it has data
   if (activeLastRow > 1) {
-    const activeIDs = activeSheet
-      .getRange(2, 1, activeLastRow - 1, 1)
-      .getDisplayValues()
-      .flat();
+    const activeIDs = activeSheet.getRange(2, 1, activeLastRow - 1, 1).getDisplayValues().flat();
 
     if (activeIDs.indexOf(studentID) !== -1) {
-      return "duplicateDatabaseEntry";
+      throw new Error('DUPLICATE_ENTRY');
     }
   }
 
   // Get all archive data in one batch operation
   const archiveData = archiveSheet
-    .getRange(2, 1, archiveLastRow - 1, lastColumn)
-    .getDisplayValues();
+    .getRange(2, 1, archiveLastRow - 1, lastColumn).getDisplayValues();
+
+  const duplicateCount = archiveData.filter(row => row[0] === studentID).length;
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
 
   // Find student index using more efficient find method
   const studentIndex = archiveData.findIndex(row => row[0] === studentID);
 
   if (studentIndex === -1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_ENTRY');
   }
 
   // Cache the student data before removal
@@ -487,7 +512,7 @@ function restoreStudentData(studentID) {
       .sort({ column: 2, ascending: true }); // Sort by Student Name (column 2)
   }
 
-  return "restoreSuccess";
+  return true;
 }
 
 /** Delete student and associated meetings from data **/
@@ -499,25 +524,23 @@ function deleteStudentData(studentID) {
   
   // Early return if archive is empty
   if (archiveLastRow <= 1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_DATA');
   }
   
   // Get all archive IDs in one batch operation
   const archiveIDs = archiveSheet
-    .getRange(2, 1, archiveLastRow - 1, 1)
-    .getDisplayValues()
-    .flat();
+    .getRange(2, 1, archiveLastRow - 1, 1).getDisplayValues().flat();
 
   // Check for duplicate entries
   const duplicateCount = archiveIDs.filter(id => id === studentID).length;
   if (duplicateCount > 1) {
-    return "duplicateDatabaseEntry";
+    throw new Error('DUPLICATE_ENTRY');
   }
 
   // Find student index
   const studentIndex = archiveIDs.indexOf(studentID);
   if (studentIndex === -1) {
-    return "missingDatabaseEntry";
+    throw new Error('MISSING_STUDENT_ENTRY');
   }
 
   // Delete student from archive (adding 2 to account for header row and 0-based index)
@@ -544,7 +567,7 @@ function deleteStudentData(studentID) {
     });
   }
 
-  return "deleteSuccess";
+  return true;
 }
 
 /** Delete a single meeting from data **/
@@ -556,27 +579,30 @@ function deleteMeetingData(meetingID) {
   
   // Early return if meetings sheet is empty
   if (lastRow <= 1) {
-    return "missingMeetingEntry";
+    throw new Error('MISSING_MEETING_DATA');
   }
   
   // Get all meeting data in one batch operation
-  const meetingData = meetingSheet
-    .getRange(2, 1, lastRow - 1, lastColumn)
-    .getDisplayValues();
+  const meetingData = meetingSheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues();
+
+  const duplicateCount = meetingData.filter(row => row[0] === meetingID).length;
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
 
   // Find meeting index using more efficient find method
   const meetingIndex = meetingData.findIndex(row => row[0] === meetingID);
 
   // Return early if meeting not found
   if (meetingIndex === -1) {
-    return "missingMeetingEntry";
+    throw new Error('MISSING_MEETING_ENTRY');
   }
 
   // Delete meeting (adding 2 to account for header row and 0-based index)
   const meetingRowIndex = meetingIndex + 2;
   meetingSheet.deleteRow(meetingRowIndex);
 
-  return "deleteSuccess";
+  return true;
 }
 
 ////////////////////////
@@ -600,7 +626,7 @@ function getUserSettings() {
   };
 }
 
-/** Get all settings from User Properties and Script Properties */
+/** Get app settings from script properties service */
 function getAppSettings() {
   const scriptProperties = PropertiesService.getScriptProperties();
   const currentYear = new Date().getFullYear();
@@ -634,36 +660,40 @@ function getAppSettings() {
 
 /** Write all settings to user and script properties stores **/
 function writeSettings(userSettings, appSettings) {
-  const userProperties = PropertiesService.getUserProperties();
-  const scriptProperties = PropertiesService.getScriptProperties();
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const scriptProperties = PropertiesService.getScriptProperties();
 
-  // Store user-specific settings in User Properties and delete unused properties
-  userProperties.setProperties({
-    theme: userSettings.theme || "falconLight",
-    customThemeType: userSettings.customThemeType || null,
-    customThemePrimaryColor: userSettings.customThemePrimaryColor || null,
-    customThemeAccentColor: userSettings.customThemeAccentColor || null,
-    alertSound: userSettings.alertSound || "alert01",
-    emailSound: userSettings.emailSound || "email01",
-    removeSound: userSettings.removeSound || "remove01",
-    successSound: userSettings.successSound || "sucess01",
-    silentMode: userSettings.silentMode || "false"
-  }, true);
-  
-  // Store app-wide settings in Script Properties and delete unused properties
-  scriptProperties.setProperties({
-    schoolName: appSettings.schoolSettings.schoolName,
-    schoolYear: appSettings.schoolSettings.schoolYear,
-    classroomSettings: JSON.stringify(appSettings.classroomSettings),
-    emailTemplateReferralSubject: appSettings.emailTemplateSettings.referral.subject,
-    emailTemplateReferralBody: appSettings.emailTemplateSettings.referral.body,
-    emailTemplateInitialSubject: appSettings.emailTemplateSettings.initial.subject,
-    emailTemplateInitialBody: appSettings.emailTemplateSettings.initial.body,
-    emailTemplateReminderSubject: appSettings.emailTemplateSettings.reminder.subject,
-    emailTemplateReminderBody: appSettings.emailTemplateSettings.reminder.body,
-    emailTemplateSummarySubject: appSettings.emailTemplateSettings.summary.subject,
-    emailTemplateSummaryBody: appSettings.emailTemplateSettings.summary.body
-  }, true);
+    // Store user-specific settings in User Properties and delete unused properties
+    userProperties.setProperties({
+      theme: userSettings.theme || "falconLight",
+      customThemeType: userSettings.customThemeType || null,
+      customThemePrimaryColor: userSettings.customThemePrimaryColor || null,
+      customThemeAccentColor: userSettings.customThemeAccentColor || null,
+      alertSound: userSettings.alertSound || "alert01",
+      emailSound: userSettings.emailSound || "email01",
+      removeSound: userSettings.removeSound || "remove01",
+      successSound: userSettings.successSound || "sucess01",
+      silentMode: userSettings.silentMode || "false"
+    }, true);
+    
+    // Store app-wide settings in Script Properties and delete unused properties
+    scriptProperties.setProperties({
+      schoolName: appSettings.schoolSettings.schoolName,
+      schoolYear: appSettings.schoolSettings.schoolYear,
+      classroomSettings: JSON.stringify(appSettings.classroomSettings),
+      emailTemplateReferralSubject: appSettings.emailTemplateSettings.referral.subject,
+      emailTemplateReferralBody: appSettings.emailTemplateSettings.referral.body,
+      emailTemplateInitialSubject: appSettings.emailTemplateSettings.initial.subject,
+      emailTemplateInitialBody: appSettings.emailTemplateSettings.initial.body,
+      emailTemplateReminderSubject: appSettings.emailTemplateSettings.reminder.subject,
+      emailTemplateReminderBody: appSettings.emailTemplateSettings.reminder.body,
+      emailTemplateSummarySubject: appSettings.emailTemplateSettings.summary.subject,
+      emailTemplateSummaryBody: appSettings.emailTemplateSettings.summary.body
+    }, true);
+  } catch (e) {
+    throw new Error(e);
+  }
 }
 
 /////////////////////
@@ -676,11 +706,16 @@ function createEmail(recipient, subject, body, attachments) {
 
   // Check user's email quota and warn if it's too low to send emails
   if (emailQuota <= 10) {
-    return "emailQuotaLimit";
+    throw new Error('QUOTA_LIMIT');
   }
 
   // Get the current user's email
   const currentUserEmail = Session.getActiveUser().getEmail();
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const schoolName = scriptProperties.getProperty('schoolName')
+  
+  // Set senderName based on schoolName
+  const senderName = schoolName || ''; // Use schoolName if it exists, else default to an empty string
   
   // Create the email message object
   const emailMessage = {
@@ -689,7 +724,7 @@ function createEmail(recipient, subject, body, attachments) {
     replyTo: currentUserEmail,
     subject: subject,
     htmlBody: body,
-    name: 'First Lutheran School',
+    name: senderName,
     attachments: []
   };
 
@@ -703,10 +738,10 @@ function createEmail(recipient, subject, body, attachments) {
   // Send the email
   try {
     MailApp.sendEmail(emailMessage);
-    return "emailSuccess";
+    return true;
   }
-  catch (e) {
-    return "emailFailure";
+  catch(e) {
+    throw new Error('EMAIL_FAILURE');
   }
 }
 
@@ -716,70 +751,78 @@ function createEmail(recipient, subject, body, attachments) {
 
 /** Export data as a .csv file **/
 function getCsv(dataType) {
-  let data;
-  
-  if (dataType === 'activeData') {
-    data = ACTIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
-  } else if (dataType === 'archiveData') {
-    data = ARCHIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
-  } else {
-    data = MEETING_DATA_SHEET.getDataRange().getDisplayValues();
+  try {
+    let data;
+    
+    if (dataType === 'activeData') {
+      data = ACTIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
+    } else if (dataType === 'archiveData') {
+      data = ARCHIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
+    } else {
+      data = MEETING_DATA_SHEET.getDataRange().getDisplayValues();
+    }
+
+    return data.map(rowArray => {
+      return rowArray.map(field => {
+        // Convert to string and trim any whitespace
+        let stringField = String(field).trim();
+        
+        // Determine if the field needs to be quoted
+        let needsQuoting = false;
+        
+        // Quote if: contains commas, quotes, line breaks, or is a number with leading zeros
+        if (
+          stringField.includes(',') || 
+          stringField.includes('"') || 
+          stringField.includes('\n') || 
+          stringField.includes('\r') ||
+          (
+            // Check for leading zeros in numeric fields
+            /^0\d+$/.test(stringField) && 
+            !isNaN(stringField)
+          )
+        ) {
+          needsQuoting = true;
+        }
+
+        if (needsQuoting) {
+          // Escape any existing quotes by doubling them
+          stringField = stringField.replace(/"/g, '""');
+          // Wrap the field in quotes
+          return `"${stringField}"`;
+        }
+        
+        return stringField;
+      }).join(',');
+    }).join('\r\n');
+  } catch(e) {
+      throw new Error('EXPORT_FAILURE');
   }
-
-  return data.map(rowArray => {
-    return rowArray.map(field => {
-      // Convert to string and trim any whitespace
-      let stringField = String(field).trim();
-      
-      // Determine if the field needs to be quoted
-      let needsQuoting = false;
-      
-      // Quote if: contains commas, quotes, line breaks, or is a number with leading zeros
-      if (
-        stringField.includes(',') || 
-        stringField.includes('"') || 
-        stringField.includes('\n') || 
-        stringField.includes('\r') ||
-        (
-          // Check for leading zeros in numeric fields
-          /^0\d+$/.test(stringField) && 
-          !isNaN(stringField)
-        )
-      ) {
-        needsQuoting = true;
-      }
-
-      if (needsQuoting) {
-        // Escape any existing quotes by doubling them
-        stringField = stringField.replace(/"/g, '""');
-        // Wrap the field in quotes
-        return `"${stringField}"`;
-      }
-      
-      return stringField;
-    }).join(',');
-  }).join('\r\n');
 }
 
 /** Export data as a .xlsx file **/
 function getXlsx(dataType) {
-  const spreadsheetId = SpreadsheetApp.getActive().getId();
-  let sheetId;
-  
-  if (dataType === 'activeData') {
-    sheetId = ACTIVE_STUDENT_DATA_SHEET.getSheetId();
-  } else if (dataType === 'archiveData') {
-    sheetId = ARCHIVE_STUDENT_DATA_SHEET.getSheetId();
-  } else {
-    sheetId = MEETING_DATA_SHEET.getSheetId();
-  }
+  try {
+    const spreadsheetId = SpreadsheetApp.getActive().getId();
+    let sheetId;
+    
+    if (dataType === 'activeData') {
+      sheetId = ACTIVE_STUDENT_DATA_SHEET.getSheetId();
+    } else if (dataType === 'archiveData') {
+      sheetId = ARCHIVE_STUDENT_DATA_SHEET.getSheetId();
+    } else {
+      sheetId = MEETING_DATA_SHEET.getSheetId();
+    }
 
-  // Construct the export URL
-  const url = "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/export?format=xlsx&gid=" + sheetId;
-  
-  // Fetch the xlsx file as a blob
-  const blob = UrlFetchApp.fetch(url, {headers: {Authorization: 'Bearer ' + ScriptApp.getOAuthToken()}}).getBlob();
-  
-  // Return blob as binary
-  return blob.getBytes();
+    // Construct the export URL
+    const url = "https://docs.google.com/spreadsheets/d/" + spreadsheetId + "/export?format=xlsx&gid=" + sheetId;
+    
+    // Fetch the xlsx file as a blob
+    const blob = UrlFetchApp.fetch(url, {headers: {Authorization: 'Bearer ' + ScriptApp.getOAuthToken()}}).getBlob();
+    
+    // Return blob as binary
+    return blob.getBytes();
+  } catch(e) {
+      throw new Error('EXPORT_FAILURE');
+  }
 }
