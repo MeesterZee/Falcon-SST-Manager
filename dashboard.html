@@ -37,19 +37,25 @@
 
   {{NAVBAR}}
   <div class="tool-bar" id="toolbar">
-    <button class="tool-bar-button" id="saveChangesButton">
-      <i class="bi bi-cloud-download"></i>Save
+    <button class="tool-bar-button" style="background-color: var(--green)" id="toggleDataButton">
+      <i class="bi bi-eye"></i>Active
     </button>
+    
+    <button class="tool-bar-button" id="saveChangesButton">
+      <i class="bi bi-cloud-check"></i>Save
+    </button>
+    
     <div class="dropdown">
       <button class="dropdown-button" id="studentButton"><i class="bi bi-person-vcard"></i>Profile</button>
       <div class="dropdown-content">
         <button id="addStudentButton"><i class="bi bi-plus-circle"></i>Add student</button>
-        <button id="removeStudentButton"><i class="bi bi-dash-circle"></i>Remove student</button>
-        <button id="restoreStudentButton" style="display: none"><i class="bi bi-arrow-counterclockwise"></i>Restore student</button>
+        <button id="activateStudentButton" style="display: none"><i class="bi bi-arrow-counterclockwise"></i>Activate student</button>
+        <button id="removeStudentButton"><i class="bi bi-archive"></i>Archive student</button>
         <button id="deleteStudentButton" style="display: none"><i class="bi bi-trash3"></i>Delete student</button>
         <button id="renameStudentButton"><i class="bi bi-pencil"></i>Rename student</button>
       </div>
     </div>
+    
     <div class="dropdown">
       <button class="dropdown-button" id="meetingButton"><i class="bi bi-journal-text"></i>Meeting</button>
       <div class="dropdown-content">
@@ -57,18 +63,22 @@
         <button id="deleteMeetingButton"><i class="bi bi-trash3"></i>Delete meeting</button>
       </div>
     </div>
-    <button class="tool-bar-button" id="emailButton">
-      <i class="bi bi-envelope"></i>Email
-    </button>
+    
+    <div class="dropdown">
+      <button class="dropdown-button" id="emailButton"><i class="bi bi-envelope"></i>Email</button>
+      <div class="dropdown-content">
+        <button id="composeEmailButton"><i class="bi bi-envelope-paper"></i>Compose email</button>
+        <button id="sendReferralButton"><i class="bi bi-card-checklist"></i>Send referral</button>
+      </div>
+    </div>
+    
     <div class="dropdown">
       <button class="dropdown-button" id="exportButton"><i class="bi bi-box-arrow-up"></i>Export</button>
       <div class="dropdown-content">
         <button id="exportMeetingButton"><i class="bi bi-file-earmark-text"></i>Meeting summary</button>
-        <button id="exportDataButton"><i class="bi bi-database"></i>App data</button>
+        <button id="exportDataButton"><i class="bi bi-database"></i>Application data</button>
       </div>
     </div>
-    <button class="tool-bar-button" id="archiveButton"><i class="bi bi-archive"></i>Archive</button>
-    <button class="tool-bar-button" id="backButton" style="display: none"><i class="bi bi-arrow-left-circle"></i>Back</button>
   </div>
 
   <div id="toast-container"></div>
@@ -90,7 +100,7 @@
           <i class="bi bi-search search-icon"></i>
           <input type="text" id="profileSearch" placeholder="Search...">
         </div>
-        <h3>Basic Information</h3>
+        <h3>Student Information</h3>
         <div class="table-wrapper">
           <table>
             <tr>
@@ -153,12 +163,42 @@
               <td class="td2"><input class="table-input" type="text" id="dietaryRestrictions"></input></td>
             </tr>
             <tr>
-              <td class="td2">Diagnoses:</td>
-              <td class="td2"><input class="table-input" type="text" id="diagnoses"></input></td>
+              <td class="td2">Diagnosis:</td>
+              <td class="td2">
+                <select class="table-select" id="diagnosis">
+                  <option value="ADHD (Attention Deficit Hyperactivity Disorder)">ADHD (Attention Deficit Hyperactivity Disorder)</option>
+                  <option value="APD (Auditory Processing Disorder)">APD (Auditory Processing Disorder)</option>
+                  <option value="ASD (Autism Spectrum Disorder)">ASD (Autism Spectrum Disorder)</option>
+                  <option value="DD (Developmental Delay)">DD (Developmental Delay)</option>
+                  <option value="DS (Down Syndrome)">DS (Down Syndrome)</option>
+                  <option value="EBD (Emotional and Behavioral Disorders)">EBD (Emotional and Behavioral Disorders)
+                  <option value="ED (Emotional Disturbance)">ED (Emotional Disturbance)</option>
+                  </option>
+                  <option value="HI (Hearing Impairment)">HI (Hearing Impairment)</option>
+                  <option value="ID (Intellectual Disability)">ID (Intellectual Disability)</option>
+                  <option value="LD (Language Disorder)">LD (Language Disorder)</option>
+                  <option value="MD (Multiple Disabilities)">MD (Multiple Disabilities)</option>
+                  <option value="OHI (Other Health Impairment)">OHI (Other Health Impairment)</option>
+                  <option value="OI (Orthopedic Impairment)">OI (Orthopedic Impairment)</option>
+                  <option value="SLD (Specific Learning Disorder)">SLD (Specific Learning Disorder)</option>
+                  <option value="TBI (Traumatic Brain Injury)">TBI (Traumatic Brain Injury)</option>
+                  <option value="VI (Visual Impairment)">VI (Visual Impairment)</option>
+                </select>
+              </td>
             </tr>
             <tr>
               <td class="td2">Services/programs:</td>
               <td class="td2"><input class="table-input" type="text" id="servicesPrograms"></input></td>
+            </tr>
+            <tr>
+              <td class="td2">Aide:</td>
+              <td class="td2">
+                <select class="table-select" id="aide">
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time (AM)">Part-time (AM)</option>
+                  <option value="Part-time (PM)">Part-time (PM)</option>
+                </select>
+              </td>
             </tr>
             <tr>
               <td class="td2">Specialized instruction:</td>
@@ -311,7 +351,7 @@
           </h2>
         </div>
         <div class="modal-htmlbody">
-          <h3>Basic Information</h3>
+          <h3>Student Information</h3>
           <div class="table-wrapper">
             <table>
               <tr>
@@ -374,12 +414,41 @@
                 <td class="td2"><input class="table-input" type="text" id="addDietaryRestrictions"></td>
               </tr>
               <tr>
-                <td class="td2">Diagnoses:</td>
-                <td class="td2"><input class="table-input" type="text" id="addDiagnoses"></td>
+                <td class="td2">Diagnosis:</td>
+                <td class="td2">
+                  <select class="table-select" id="addDiagnosis">
+                    <option value="ADHD (Attention Deficit Hyperactivity Disorder)">ADHD (Attention Deficit Hyperactivity Disorder)</option>
+                    <option value="APD (Auditory Processing Disorder)">APD (Auditory Processing Disorder)</option>
+                    <option value="ASD (Autism Spectrum Disorder)">ASD (Autism Spectrum Disorder)</option>
+                    <option value="DD (Developmental Delay)">DD (Developmental Delay)</option>
+                    <option value="EBD (Emotional and Behavioral Disorders)">EBD (Emotional and Behavioral Disorders)
+                    <option value="ED (Emotional Disturbance)">ED (Emotional Disturbance)</option>
+                    </option>
+                    <option value="HI (Hearing Impairment)">HI (Hearing Impairment)</option>
+                    <option value="ID (Intellectual Disability)">ID (Intellectual Disability)</option>
+                    <option value="LD (Language Disorder)">LD (Language Disorder)</option>
+                    <option value="MD (Multiple Disabilities)">MD (Multiple Disabilities)</option>
+                    <option value="OHI (Other Health Impairment)">OHI (Other Health Impairment)</option>
+                    <option value="OI (Orthopedic Impairment)">OI (Orthopedic Impairment)</option>
+                    <option value="SLD (Specific Learning Disorder)">SLD (Specific Learning Disorder)</option>
+                    <option value="TBI (Traumatic Brain Injury)">TBI (Traumatic Brain Injury)</option>
+                    <option value="VI (Visual Impairment)">VI (Visual Impairment)</option>
+                  </select>
+                </td>
               </tr>
               <tr>
                 <td class="td2">Services/programs:</td>
                 <td class="td2"><input class="table-input" type="text" id="addServicesPrograms"></td>
+              </tr>
+              <tr>
+                <td class="td2">Aide:</td>
+                <td class="td2">
+                  <select class="table-select" id="addAide">
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time (AM)">Part-time (AM)</option>
+                    <option value="Part-time (PM)">Part-time (PM)</option>
+                  </select>
+                </td>
               </tr>
               <tr>
                 <td class="td2">Specialized instruction:</td>
@@ -454,7 +523,7 @@
     </div>
   </div>
 
-  <!-- RENAME MODAL -->
+  <!-- RENAME STUDENT MODAL -->
     <div class="modal-html" id="renameStudentModal">
       <div class="modal-htmlcontent">
         <div class="modal-htmlheader">
@@ -474,7 +543,7 @@
         </div>
       </div>
     </div>
-
+  
   <!-- ADD MEETING MODAL -->
     <div class="modal-html" id="addMeetingModal">
       <div class="modal-htmlcontent">
@@ -559,6 +628,334 @@
       </div>
     </div>
 
+    <!-- REFER STUDENT MODAL -->
+    <div class="modal-html" id="referStudentModal">
+      <div class="modal-htmlcontent">
+        <div class="modal-htmlheader">
+          <h2>Student Referral
+            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
+          </h2>
+        </div>
+        <div class="modal-htmlbody">
+          <h3>Student Information</h3>
+          <div class="table-wrapper">
+            <table>
+              <tr>
+                <td class="td2">Student first name:</td>
+                <td class="td2"><input class="table-input" type="text" id="referFirstName"></select></td>
+              </tr>
+              <tr>
+                <td class="td2">Student last name:</td>
+                <td class="td2"><input class="table-input" type="text" id="referLastName"></td>
+              </tr>
+              <tr>
+                <td class="td2">Gender:</td>
+                <td class="td2">
+                  <select class="table-select" id="referGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Grade:</td>
+                <td class="td2">
+                  <select class="table-select" id="referGrade">
+                    <option value="TK">TK</option>
+                    <option value="K">K</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Classroom/teacher:</td>
+                <td class="td2">
+                  <select class="table-select" id="referClassroom">
+                    <!-- Populate on load -->
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="td2">Referral date:</td>
+                <td class="td2"><input class="table-input" type="date" id="referDate"></td>
+              </tr>
+            </table>
+          </div>
+          
+          <h3>Student Strengths</h3>
+          <textarea class="column-textarea" style="height: 100px" id="referStrengths"></textarea>
+
+          <h3>Student Concerns</h3>
+          <textarea class="column-textarea" style="height: 100px" id="referConcerns"></textarea>
+
+          <h3>Reading</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="phonemicAwareness">
+                <span class="slider round"></span>
+              </label>Difficulty with phonemic awareness
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="decodingPhonics">
+                <span class="slider round"></span>
+              </label>Problems with decoding/phonics
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="fluency">
+                <span class="slider round"></span>
+              </label>Lack of fluency
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="vocabulary">
+                <span class="slider round"></span>
+              </label>Limited vocabulary
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="comprehension">
+                <span class="slider round"></span>
+              </label>Struggles with comprehension
+            </div>
+          </div>
+
+          <h3>Written Expression</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="transcription">
+                <span class="slider round"></span>
+              </label>Weak transcription skills
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="spellingPhonics">
+                <span class="slider round"></span>
+              </label>Challenges with spelling/phonics
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="grammar">
+                <span class="slider round"></span>
+              </label>Struggles with grammar
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="sentenceConstruction">
+                <span class="slider round"></span>
+              </label>Difficulty constructing sentences
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="genreContentKnowledge">
+                <span class="slider round"></span>
+              </label>Limited genre and content knowledge
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="writingProcess">
+                <span class="slider round"></span>
+              </label>Struggles with the writing process
+            </div>
+          </div>
+
+          <h3>Mathematics</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="computationalWeakness">
+                <span class="slider round"></span>
+              </label>Computational weakness
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="incompleteMasteryNumberFacts">
+                <span class="slider round"></span>
+              </label>Incomplete mastery of number facts
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="mathLanguageDifficulty">
+                <span class="slider round"></span>
+              </label>Math language difficulties
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="visualSpatialPerceptual">
+                <span class="slider round"></span>
+              </label>Visual, spatial, and perceptual challenges
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="difficultyTransferringKnowledge">
+                <span class="slider round"></span>
+              </label>Difficulty transferring knowledge
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="makingConnections">
+                <span class="slider round"></span>
+              </label>Problems making connections
+            </div>
+          </div>
+
+          <h3>Behavior</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="unfocusedInClass">
+                <span class="slider round"></span>
+              </label>Unfocused in class/attention issues
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="distractionToOthers">
+                <span class="slider round"></span>
+              </label>Being a distraction to others
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="executiveFunctioningIssues">
+                <span class="slider round"></span>
+              </label>Executive functioning difficulties
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="disruptiveTalking">
+                <span class="slider round"></span>
+              </label>Disruptive or excessive talking
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="behaviorDifficultySelfRegulation">
+                <span class="slider round"></span>
+              </label>Difficulty with self-regulation
+            </div>
+          </div>
+
+          <h3>Social/Emotional</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="excessiveEmotionalBehavior">
+                <span class="slider round"></span>
+              </label>Excessive emotional behavior
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="limitedSocialSkills">
+                <span class="slider round"></span>
+              </label>Limited social skills
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="socialDifficultySelfRegulation">
+                <span class="slider round"></span>
+              </label>Difficulty with self-regulation
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="anxietyRelatedBehaviors">
+                <span class="slider round"></span>
+              </label>Anxiety-related behaviors
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="moodSwings">
+                <span class="slider round"></span>
+              </label>Mood swings
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="depressionWithdrawal">
+                <span class="slider round"></span>
+              </label>Depression or withdrawal
+            </div>
+          </div>
+
+          <h3>Medical</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="visualPerceptualConcerns">
+                <span class="slider round"></span>
+              </label>Unidentified visual/perceptual concerns
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="poorFineMotorSkills">
+                <span class="slider round"></span>
+              </label>Poor fine-motor skills
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="poorGrossMotorSkills">
+                <span class="slider round"></span>
+              </label>Poor gross-motor skills
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="chronicHealthIssues">
+                <span class="slider round"></span>
+              </label>Chronic health issues
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="speechLanguageDifficulties">
+                <span class="slider round"></span>
+              </label>Speech or language difficulties
+            </div>
+          </div>
+
+          <h3>Interventions/Modifications</h3>
+          <textarea class="column-textarea" style="height: 100px" id="referInterventions"></textarea>
+
+          <h3>Support Type</h3>
+          <div class="switch-container">
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="supportPushIn">
+                <span class="slider round"></span>
+              </label>Push-in intervention
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="supportPullOut">
+                <span class="slider round"></span>
+              </label>Pull-out support
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="supportResources">
+                <span class="slider round"></span>
+              </label>Resources
+            </div>
+            <div>
+              <label class="switch">
+                <input type="checkbox" id="supportOther">
+                <span class="slider round"></span>
+              </label>Other
+            </div>
+          </div>
+
+          <div class="modal-htmlbutton">
+            <button id="referStudentModalButton">Send Referral</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- EXPORT MEETING SUMMARY MODAL -->
     <div class="modal-html" id="exportMeetingModal">
       <div class="modal-htmlcontent">
@@ -584,17 +981,16 @@
     <div class="modal-html" id="exportDataModal" >
       <div class="modal-htmlcontent">
         <div class="modal-htmlheader">
-          <h2>Export App Data
+          <h2>Export Application Data
             <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
           </h2>
         </div>
         <div class="modal-htmlbody">
-          <h3>App Data Type</h3>
+          <h3>Application Data Type</h3>
           <label class="block-label" for="dataTypeSelect">Select data:</label>
           <select class="column-select" id="dataTypeSelect" style="margin-bottom: 0">
-            <option value="activeData">Active student profile data</option>
-            <option value="archiveData">Archive student profile data</option>
-            <option value="meetingData">Meeting data</option>
+            <option value="studentData">Student profile data</option>
+            <option value="meetingData">Student meeting data</option>
           </select>
           <h3>File Type</h3>
           <label class="block-label" for="fileTypeSelect">Select file type:</label>
