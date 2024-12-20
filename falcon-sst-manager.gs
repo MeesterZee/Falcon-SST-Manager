@@ -1,4 +1,4 @@
-/** Falcon SST Manager - Web App v1.7 **/
+/** Falcon SST Manager - Web App v3.1 **/
 /** Falcon EDU © 2023-2025 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
@@ -6,8 +6,7 @@
 // GLOBAL CONSTANTS //
 //////////////////////
 
-const ACTIVE_STUDENT_DATA_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Active Student Data');
-const ARCHIVE_STUDENT_DATA_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Archive Student Data');
+const STUDENT_DATA_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Student Data');
 const MEETING_DATA_SHEET = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Meeting Data');
 
 ///////////////////////////
@@ -32,6 +31,7 @@ function doGet(e) {
 /** Create navigation/menu bar **/
 function getNavbar(activePage) {
   const dashboardURL = getScriptURL();
+  const dataURL = getScriptURL("page=data");
   const settingsURL = getScriptURL("page=settings");
   
   // Set the app header
@@ -56,6 +56,9 @@ function getNavbar(activePage) {
       <a href="${dashboardURL}" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">
         <i class="bi bi-person-circle"></i>Dashboard
       </a>
+      <a href="${dataURL}" class="nav-link ${activePage === 'data' ? 'active' : ''}">
+        <i class="bi bi-bar-chart-line"></i>Data
+      </a>
       <a href="${settingsURL}" class="nav-link ${activePage === 'settings' ? 'active' : ''}">
         <i class="bi bi-gear-wide-connected"></i>Settings
       </a>
@@ -74,7 +77,7 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 1.7<br>Build: 15111924<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
+        const message = "Web App Version: 3.1<br>Build: 29.122024<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
         showModal(title, message, "Close");
       }
     </script>
@@ -106,13 +109,8 @@ function include(filename) {
 /////////////////////////
 
 /** Get active data **/
-function getActiveData() {
-  return getSheetData(ACTIVE_STUDENT_DATA_SHEET);
-}
-
-/** Get archive data **/
-function getArchiveData() {
-  return getSheetData(ARCHIVE_STUDENT_DATA_SHEET);
+function getStudentData() {
+  return getSheetData(STUDENT_DATA_SHEET);
 }
 
 /** Get meeting data **/
@@ -145,11 +143,10 @@ function getSheetData(sheet) {
 /** Get ID cache **/
 function getIDCache() {
   const sheets = [
-    ACTIVE_STUDENT_DATA_SHEET,
-    ARCHIVE_STUDENT_DATA_SHEET,
+    STUDENT_DATA_SHEET,
     MEETING_DATA_SHEET
   ];
-  
+    
   const ids = sheets.reduce((acc, sheet) => {
     const lastRow = sheet.getLastRow();
     if (lastRow > 1) {
@@ -167,10 +164,10 @@ function getIDCache() {
 ////////////////////
 
 /** Save student data **/
-function saveStudentData(dataSet, studentData, meetingData) {
+function saveStudentData(studentData, meetingData) {
   // Cache frequently used values and references
   const studentID = studentData[0][0];
-  const studentDataSheet = dataSet === "active" ? ACTIVE_STUDENT_DATA_SHEET : ARCHIVE_STUDENT_DATA_SHEET;
+  const studentDataSheet = STUDENT_DATA_SHEET;
     
   // Get last row in one call
   const studentDataSheetLastRow = studentDataSheet.getLastRow();
@@ -199,11 +196,11 @@ function saveStudentData(dataSet, studentData, meetingData) {
   // Process meeting data if provided
   if (meetingData?.length > 0) {
     const meetingID = meetingData[0][0];
-    const meetingSheetLastRow = MEETING_DATA_SHEET.getLastRow();
+    const meetingDataSheetLastRow = MEETING_DATA_SHEET.getLastRow();
       
-    if (meetingSheetLastRow > 1) {
+    if (meetingDataSheetLastRow > 1) {
       // Get all meeting data at once with formatted values
-      const allMeetingData = MEETING_DATA_SHEET.getRange(2, 1, meetingSheetLastRow - 1, meetingData[0].length).getDisplayValues();
+      const allMeetingData = MEETING_DATA_SHEET.getRange(2, 1, meetingDataSheetLastRow - 1, meetingData[0].length).getDisplayValues();
         
       const meetingIndex = allMeetingData.findIndex(row => row[0] === meetingID);
       if (meetingIndex === -1) {
@@ -221,16 +218,16 @@ function saveStudentData(dataSet, studentData, meetingData) {
 /** Add student data **/
 function addStudentData(studentData) {
   // Cache sheet properties
-  const sheet = ACTIVE_STUDENT_DATA_SHEET;
+  const sheet = STUDENT_DATA_SHEET;
   const studentID = studentData[0];
   const studentLastRow = sheet.getLastRow();
   const studentlastColumn = sheet.getLastColumn();
-  
+    
   // Check for duplicates only if there's existing data
   if (studentLastRow > 1) {
     // Batch read all Student IDs in one operation and convert to 1D array for faster searching
     const studentIDs = sheet.getRange(2, 1, studentLastRow - 1, 1).getDisplayValues().flat(); 
-      
+        
     // Use indexOf for efficient duplicate checking
     if (studentIDs.indexOf(studentID) !== -1) {
       throw new Error('DUPLICATE_ENTRY');
@@ -239,13 +236,13 @@ function addStudentData(studentData) {
 
   // Add student data to the sheet
   sheet.appendRow(studentData);
-  
+    
   // Perform formatting
   sheet.getRange('A:A').setNumberFormat('000000');
-  
-  // Sort only if there's more than one row of data
+    
+  // Sort alphabetically by student name
   if (studentLastRow > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, studentlastColumn).sort({ column: 2, ascending: true });
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, studentlastColumn).sort({ column: 3, ascending: true });
   }
 
   return true;
@@ -254,11 +251,11 @@ function addStudentData(studentData) {
 /** Add meeting data **/
 function addMeetingData(meetingData) {
   // Cache sheet properties
-  const meetingSheet = MEETING_DATA_SHEET;
-  const studentSheet = ACTIVE_STUDENT_DATA_SHEET;  // Add reference to student sheet
+  const meetingDataSheet = MEETING_DATA_SHEET;
+  const studentSheet = STUDENT_DATA_SHEET;  // Add reference to student sheet
   const meetingID = meetingData[0];
   const studentID = meetingData[1];  // Assuming student ID is second element
-  const meetingLastRow = meetingSheet.getLastRow();
+  const meetingLastRow = meetingDataSheet.getLastRow();
 
   // First, validate that the student exists
   const studentLastRow = studentSheet.getLastRow();
@@ -278,9 +275,9 @@ function addMeetingData(meetingData) {
   }
   
   // Check for duplicates only if there's existing data
-  if (meetingLastRow > 1) {
+  if (meetingDataLastRow > 1) {
     // Batch read all Meeting IDs in one operation and convert to 1D array for faster searching
-    const meetingIDs = meetingSheet.getRange(2, 1, meetingLastRow - 1, 1).getDisplayValues().flat();
+    const meetingIDs = meetingDataSheet.getRange(2, 1, meetingDataLastRow - 1, 1).getDisplayValues().flat();
       
     // Use indexOf for efficient duplicate checking
     if (meetingIDs.indexOf(meetingID) !== -1) {
@@ -296,53 +293,40 @@ function addMeetingData(meetingData) {
   ];
 
   // Add the meeting data to the sheet
-  meetingSheet.appendRow(meetingData);
+  meetingDataSheet.appendRow(meetingData);
   
   // Create a single transaction for all formatting operations
   const formatTransaction = formatRanges.map(({ range, format }) => {
-    return () => meetingSheet.getRange(range).setNumberFormat(format);
+    return () => meetingDataSheet.getRange(range).setNumberFormat(format);
   });
   
   // Execute all formatting operations
   formatTransaction.forEach(operation => operation());
 
   // Sort only if there's more than one row of data
-  if (meetingLastRow > 1) {
-    const lastRow = meetingSheet.getLastRow();
-    const lastCol = meetingSheet.getLastColumn();
+  if (meetingDataLastRow > 1) {
+    const lastRow = meetingDataSheet.getLastRow();
+    const lastCol = meetingDataSheet.getLastColumn();
     
-    // Sort in a single operation
-    meetingSheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: 4, ascending: true });
+    // Sort by date
+    meetingDataSheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: 4, ascending: true });
   }
 
   return true;
 }
 
-/** Remove student from active data and add to archive data **/
-function removeStudentData(studentID) {
+function updateStudentStatus(studentID, status) {
   // Cache sheet references and properties
-  const activeSheet = ACTIVE_STUDENT_DATA_SHEET;
-  const archiveSheet = ARCHIVE_STUDENT_DATA_SHEET;
+  const activeSheet = STUDENT_DATA_SHEET;
   const activeLastRow = activeSheet.getLastRow();
-  const archiveLastRow = archiveSheet.getLastRow();
-  const lastColumn = activeSheet.getLastColumn();
 
   // Early return if active data is empty
   if (activeLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
 
-  // Check for duplicate in archive if it has data
-  if (archiveLastRow > 1) {
-    const archiveIDs = archiveSheet.getRange(2, 1, archiveLastRow - 1, 1).getDisplayValues().flat();
-
-    if (archiveIDs.indexOf(studentID) !== -1) {
-      throw new Error('DUPLICATE_ENTRY');
-    }
-  }
-
   // Get all active data in one batch operation
-  const activeData = activeSheet.getRange(2, 1, activeLastRow - 1, lastColumn).getDisplayValues();
+  const activeData = activeSheet.getRange(2, 1, activeLastRow - 1, activeSheet.getLastColumn()).getDisplayValues();
 
   // Check for duplicate in active data
   const duplicateCount = activeData.filter(row => row[0] === studentID).length;
@@ -350,40 +334,25 @@ function removeStudentData(studentID) {
     throw new Error('DUPLICATE_ENTRY');
   }
 
-  // Find student index using more efficient find method
+  // Find student index using a more efficient find method
   const studentIndex = activeData.findIndex(row => row[0] === studentID);
 
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Cache the student data before removal
-  const studentData = activeData[studentIndex];
-  const studentRowIndex = studentIndex + 2; // Account for header row
+  // Update the status of the student (Status is always column 2)
+  activeSheet.getRange(studentIndex + 2, 2).setValue(status);
 
-  // Batch process operations
-  // 1. Remove from active sheet
-  activeSheet.deleteRow(studentRowIndex);
-
-  // 2. Add to archive sheet and format
-  archiveSheet.appendRow(studentData);
-  archiveSheet.getRange('A:A').setNumberFormat('000000');
-
-  // 3. Sort archive sheet if needed
-  const newArchiveLastRow = archiveSheet.getLastRow();
-  
-  if (newArchiveLastRow > 2) {
-    archiveSheet
-      .getRange(2, 1, newArchiveLastRow - 1, lastColumn)
-      .sort({ column: 2, ascending: true }); // Sort by Student Name (column 2)
-  }
+  // Sort alphabetically by student name
+  activeSheet.getRange(2, 1, activeLastRow - 1, activeSheet.getLastColumn()).sort({ column: 3, ascending: true });
 
   return true;
 }
 
 /** Rename student in data **/
-function renameStudent(dataSet, studentID, newStudentName) {
-  const sheet = dataSet === "active" ? ACTIVE_STUDENT_DATA_SHEET : ARCHIVE_STUDENT_DATA_SHEET;
+function renameStudent(studentID, newStudentName) {
+  const sheet = STUDENT_DATA_SHEET;
   const sheetLastRow = sheet.getLastRow();
   
   if (sheetLastRow <= 1) {
@@ -412,19 +381,19 @@ function renameStudent(dataSet, studentID, newStudentName) {
   
   // Update student name in student sheet
   operations.push(() => {
-    sheet.getRange(studentIndex + 2, 2).setValue(newStudentName);
+    sheet.getRange(studentIndex + 2, 3).setValue(newStudentName);
     
-    // Sort after update
-    sheet.getRange(2, 1, sheetLastRow - 1, sheet.getLastColumn()).sort({ column: 2, ascending: true });
+    // Sort alphabetically by student name
+    sheet.getRange(2, 1, sheetLastRow - 1, sheet.getLastColumn()).sort({ column: 3, ascending: true });
   });
 
   // Update meeting data sheet
-  const meetingSheet = MEETING_DATA_SHEET;
-  const meetingLastRow = meetingSheet.getLastRow();
+  const meetingDataSheet = MEETING_DATA_SHEET;
+  const meetingDataLastRow = meetingDataSheet.getLastRow();
 
-  if (meetingLastRow > 1) {
+  if (meetingDataLastRow > 1) {
     // Load all meeting data at once
-    const meetingRange = meetingSheet.getRange(2, 2, meetingLastRow - 1, 2);
+    const meetingRange = meetingDataSheet.getRange(2, 2, meetingDataLastRow - 1, 2);
     const meetingData = meetingRange.getValues();
     
     // Find all rows that need updating
@@ -437,11 +406,11 @@ function renameStudent(dataSet, studentID, newStudentName) {
     if (rowsToUpdate.length > 0) {
       operations.push(() => {
         const ranges = rowsToUpdate.map(row => 
-          meetingSheet.getRange(row, 3)
+          meetingDataSheet.getRange(row, 3)
         );
         
         // Use batch setValue for all matching rows
-        meetingSheet.getRangeList(ranges.map(r => r.getA1Notation())).setValue(newStudentName);
+        meetingDataSheet.getRangeList(ranges.map(r => r.getA1Notation())).setValue(newStudentName);
       });
     }
   }
@@ -452,107 +421,44 @@ function renameStudent(dataSet, studentID, newStudentName) {
   return true;
 }
 
-/** Restore student from archive data and add to active data **/
-function restoreStudentData(studentID) {
-  // Cache sheet references and properties
-  const activeSheet = ACTIVE_STUDENT_DATA_SHEET;
-  const archiveSheet = ARCHIVE_STUDENT_DATA_SHEET;
-  const activeLastRow = activeSheet.getLastRow();
-  const archiveLastRow = archiveSheet.getLastRow();
-  const lastColumn = archiveSheet.getLastColumn();
-
-  // Early return if archive data is empty
-  if (archiveLastRow <= 1) {
-    throw new Error('MISSING_STUDENT_DATA');
-  }
-
-  // Check for duplicate in active data if it has data
-  if (activeLastRow > 1) {
-    const activeIDs = activeSheet.getRange(2, 1, activeLastRow - 1, 1).getDisplayValues().flat();
-
-    if (activeIDs.indexOf(studentID) !== -1) {
-      throw new Error('DUPLICATE_ENTRY');
-    }
-  }
-
-  // Get all archive data in one batch operation
-  const archiveData = archiveSheet
-    .getRange(2, 1, archiveLastRow - 1, lastColumn).getDisplayValues();
-
-  const duplicateCount = archiveData.filter(row => row[0] === studentID).length;
-  if (duplicateCount > 1) {
-    throw new Error('DUPLICATE_ENTRY');
-  }
-
-  // Find student index using more efficient find method
-  const studentIndex = archiveData.findIndex(row => row[0] === studentID);
-
-  if (studentIndex === -1) {
-    throw new Error('MISSING_STUDENT_ENTRY');
-  }
-
-  // Cache the student data before removal
-  const studentData = archiveData[studentIndex];
-  const studentRowIndex = studentIndex + 2; // Account for header row
-
-  // Batch process operations
-  // 1. Remove from archive sheet
-  archiveSheet.deleteRow(studentRowIndex);
-
-  // 2. Add to active sheet and format
-  activeSheet.appendRow(studentData);
-  activeSheet.getRange('A:A').setNumberFormat('000000');
-
-  // 3. Sort active sheet if needed
-  const newActiveLastRow = activeSheet.getLastRow();
-  
-  if (newActiveLastRow > 2) {
-    activeSheet
-      .getRange(2, 1, newActiveLastRow - 1, lastColumn)
-      .sort({ column: 2, ascending: true }); // Sort by Student Name (column 2)
-  }
-
-  return true;
-}
-
 /** Delete student and associated meetings from data **/
 function deleteStudentData(studentID) {
   // Cache sheet references and properties
-  const archiveSheet = ARCHIVE_STUDENT_DATA_SHEET;
-  const meetingSheet = MEETING_DATA_SHEET;
-  const archiveLastRow = archiveSheet.getLastRow();
+  const studentDataSheet = STUDENT_DATA_SHEET;
+  const meetingDataSheet = MEETING_DATA_SHEET;
+  const studentDataLastRow = studentDataSheet.getLastRow();
   
-  // Early return if archive is empty
-  if (archiveLastRow <= 1) {
+  // Early return if studentData is empty
+  if (studentDataLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
   
-  // Get all archive IDs in one batch operation
-  const archiveIDs = archiveSheet
-    .getRange(2, 1, archiveLastRow - 1, 1).getDisplayValues().flat();
+  // Get all studentData IDs in one batch operation
+  const studentIds = studentDataSheet
+    .getRange(2, 1, studentDataLastRow - 1, 1).getDisplayValues().flat();
 
   // Check for duplicate entries
-  const duplicateCount = archiveIDs.filter(id => id === studentID).length;
+  const duplicateCount = studentIds.filter(id => id === studentID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
 
   // Find student index
-  const studentIndex = archiveIDs.indexOf(studentID);
+  const studentIndex = studentIds.indexOf(studentID);
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Delete student from archive (adding 2 to account for header row and 0-based index)
+  // Delete student from studentData (adding 2 to account for header row and 0-based index)
   const studentRowIndex = studentIndex + 2;
-  archiveSheet.deleteRow(studentRowIndex);
+  studentDataSheet.deleteRow(studentRowIndex);
 
   // Handle associated meetings
-  const meetingLastRow = meetingSheet.getLastRow();
-  if (meetingLastRow > 1) {
+  const meetingDataLastRow = meetingDataSheet.getLastRow();
+  if (meetingDataLastRow > 1) {
     // Get all meeting data in one batch
-    const meetingData = meetingSheet
-      .getRange(2, 2, meetingLastRow - 1, 1)
+    const meetingData = meetingDataSheet
+      .getRange(2, 2, meetingDataLastRow - 1, 1)
       .getDisplayValues();
 
     // Find all rows to delete (in reverse order to maintain integrity)
@@ -563,7 +469,7 @@ function deleteStudentData(studentID) {
 
     // Delete meeting rows
     rowsToDelete.forEach(rowIndex => {
-      meetingSheet.deleteRow(rowIndex);
+      meetingDataSheet.deleteRow(rowIndex);
     });
   }
 
@@ -573,9 +479,9 @@ function deleteStudentData(studentID) {
 /** Delete a single meeting from data **/
 function deleteMeetingData(meetingID) {
   // Cache sheet references and properties
-  const meetingSheet = MEETING_DATA_SHEET;
-  const lastRow = meetingSheet.getLastRow();
-  const lastColumn = meetingSheet.getLastColumn();
+  const meetingDataSheet = MEETING_DATA_SHEET;
+  const lastRow = meetingDataSheet.getLastRow();
+  const lastColumn = meetingDataSheet.getLastColumn();
   
   // Early return if meetings sheet is empty
   if (lastRow <= 1) {
@@ -583,7 +489,7 @@ function deleteMeetingData(meetingID) {
   }
   
   // Get all meeting data in one batch operation
-  const meetingData = meetingSheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues();
+  const meetingData = meetingDataSheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues();
 
   const duplicateCount = meetingData.filter(row => row[0] === meetingID).length;
   if (duplicateCount > 1) {
@@ -600,7 +506,7 @@ function deleteMeetingData(meetingID) {
 
   // Delete meeting (adding 2 to account for header row and 0-based index)
   const meetingRowIndex = meetingIndex + 2;
-  meetingSheet.deleteRow(meetingRowIndex);
+  meetingDataSheet.deleteRow(meetingRowIndex);
 
   return true;
 }
@@ -637,6 +543,9 @@ function getAppSettings() {
       schoolYear: scriptProperties.getProperty('schoolYear') || (currentYear + '-' + (currentYear + 1))
     },
     classroomSettings: scriptProperties.getProperty('classroomSettings') ? JSON.parse(scriptProperties.getProperty('classroomSettings')) : [],
+    referralSettings: {
+      recipient: scriptProperties.getProperty('referralRecipient') || "",
+    },
     emailTemplateSettings: {
       referral: {
         subject: scriptProperties.getProperty('emailTemplateReferralSubject') || "",
@@ -666,15 +575,15 @@ function writeSettings(userSettings, appSettings) {
 
     // Store user-specific settings in User Properties and delete unused properties
     userProperties.setProperties({
-      theme: userSettings.theme || "falconLight",
-      customThemeType: userSettings.customThemeType || null,
-      customThemePrimaryColor: userSettings.customThemePrimaryColor || null,
-      customThemeAccentColor: userSettings.customThemeAccentColor || null,
-      alertSound: userSettings.alertSound || "alert01",
-      emailSound: userSettings.emailSound || "email01",
-      removeSound: userSettings.removeSound || "remove01",
-      successSound: userSettings.successSound || "sucess01",
-      silentMode: userSettings.silentMode || "false"
+      theme: userSettings.theme || 'falconLight',
+      customThemeType: userSettings.customThemeType || '',
+      customThemePrimaryColor: userSettings.customThemePrimaryColor || '',
+      customThemeAccentColor: userSettings.customThemeAccentColor || '',
+      alertSound: userSettings.alertSound || 'alert01',
+      emailSound: userSettings.emailSound || 'email01',
+      removeSound: userSettings.removeSound || 'remove01',
+      successSound: userSettings.successSound || 'sucess01',
+      silentMode: userSettings.silentMode || 'false'
     }, true);
     
     // Store app-wide settings in Script Properties and delete unused properties
@@ -682,6 +591,7 @@ function writeSettings(userSettings, appSettings) {
       schoolName: appSettings.schoolSettings.schoolName,
       schoolYear: appSettings.schoolSettings.schoolYear,
       classroomSettings: JSON.stringify(appSettings.classroomSettings),
+      referralRecipient: appSettings.referralSettings.recipient,
       emailTemplateReferralSubject: appSettings.emailTemplateSettings.referral.subject,
       emailTemplateReferralBody: appSettings.emailTemplateSettings.referral.body,
       emailTemplateInitialSubject: appSettings.emailTemplateSettings.initial.subject,
@@ -701,7 +611,7 @@ function writeSettings(userSettings, appSettings) {
 /////////////////////
 
 /** Create and send email */
-function createEmail(recipient, subject, body, attachments) {
+function createEmail(recipient, subject, body, attachmentType, attachments) {
   const emailQuota = MailApp.getRemainingDailyQuota();
 
   // Check user's email quota and warn if it's too low to send emails
@@ -725,15 +635,24 @@ function createEmail(recipient, subject, body, attachments) {
     subject: subject,
     htmlBody: body,
     name: senderName,
-    attachments: []
   };
 
   // Add attachments if provided
-  if (attachments) {
+  if (attachments && attachmentType) {
     const uint8Array = new Uint8Array(attachments);
-    const blob = Utilities.newBlob(uint8Array, 'application/pdf', 'First Lutheran School - SST Meeting Summary.pdf');
-    emailMessage.attachments.push(blob);
+    let blob;
+
+    if (attachmentType === 'summary') {
+      blob = Utilities.newBlob(uint8Array, 'application/pdf', 'First Lutheran School - SST Meeting Summary.pdf');
+    } 
+    if (attachmentType === 'referral') {
+      blob = Utilities.newBlob(uint8Array, 'application/pdf', 'First Lutheran School - SST Student Referral.pdf');
+    }
+    
+    emailMessage.attachments = [blob];
   }
+
+  console.log(emailMessage);
 
   // Send the email
   try {
@@ -754,10 +673,8 @@ function getCsv(dataType) {
   try {
     let data;
     
-    if (dataType === 'activeData') {
-      data = ACTIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
-    } else if (dataType === 'archiveData') {
-      data = ARCHIVE_STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
+    if (dataType === 'studentData') {
+      data = STUDENT_DATA_SHEET.getDataRange().getDisplayValues();
     } else {
       data = MEETING_DATA_SHEET.getDataRange().getDisplayValues();
     }
@@ -806,11 +723,10 @@ function getXlsx(dataType) {
     const spreadsheetId = SpreadsheetApp.getActive().getId();
     let sheetId;
     
-    if (dataType === 'activeData') {
-      sheetId = ACTIVE_STUDENT_DATA_SHEET.getSheetId();
-    } else if (dataType === 'archiveData') {
-      sheetId = ARCHIVE_STUDENT_DATA_SHEET.getSheetId();
-    } else {
+    if (dataType === 'studentData') {
+      sheetId = STUDENT_DATA_SHEET.getSheetId();
+    } 
+    else {
       sheetId = MEETING_DATA_SHEET.getSheetId();
     }
 
