@@ -1,7 +1,7 @@
 <script type="text/javascript">
   // Global constants
   const STUDENT_KEY_MAPPINGS = {
-    'gender': 'Gender', 'dateOfBirth': 'Date Of Birth', 'grade': 'Grade', 'classroom': 'Classroom', 'allergies': 'Allergies', 'medications': 'Medications', 'dietaryRestrictions':'Dietary Restrictions', 'diagnoses': 'Diagnoses', 'servicesPrograms': 'Services/Programs', 'specializedInstruction': 'Specialized Instruction', 'caseManager': 'Case Manager', 'roi1': 'ROI Organization 1', 'roi2': 'ROI Organization 2', 'roi3': 'ROI Organization 3', 'parentGuardianName1': 'Parent/Guardian Name 1', 'parentGuardianPhone1': 'Parent/Guardian Phone 1', 'parentGuardianEmail1': 'Parent/Guardian Email 1', 'parentGuardianName2': 'Parent/Guardian Name 2', 'parentGuardianPhone2': 'Parent/Guardian Phone 2', 'parentGuardianEmail2': 'Parent/Guardian Email 2', 'notes': 'Notes'
+    'gender': 'Gender', 'dateOfBirth': 'Date Of Birth', 'grade': 'Grade', 'classroom': 'Classroom', 'allergies': 'Allergies', 'medications': 'Medications', 'dietaryRestrictions':'Dietary Restrictions', 'diagnosis': 'Diagnosis', 'servicesPrograms': 'Services/Programs', 'aide': 'Aide', 'specializedInstruction': 'Specialized Instruction', 'caseManager': 'Case Manager', 'roi1': 'ROI Organization 1', 'roi2': 'ROI Organization 2', 'roi3': 'ROI Organization 3', 'parentGuardianName1': 'Parent/Guardian Name 1', 'parentGuardianPhone1': 'Parent/Guardian Phone 1', 'parentGuardianEmail1': 'Parent/Guardian Email 1', 'parentGuardianName2': 'Parent/Guardian Name 2', 'parentGuardianPhone2': 'Parent/Guardian Phone 2', 'parentGuardianEmail2': 'Parent/Guardian Email 2', 'notes': 'Notes'
   };
 
   const MEETING_KEY_MAPPINGS = {
@@ -19,7 +19,7 @@
   let cachedID = null;
   
   // Global flags
-  let dataFlag = "active"; // Active for active data sheet, archive for archive data sheet
+  //let dataFlag = "active"; // Active for active data sheet, archive for archive data sheet
   let saveFlag = true; // True if all changes saved, false if unsaved changes
   let busyFlag = false; // True if backup in progress, false if backup not in progress
 
@@ -41,11 +41,7 @@
       // Fetch data in parallel
       const [studentData, meetingData, appSettings] = await Promise.all([
         new Promise((resolve, reject) => {
-          if (dataFlag === "archive") {
-            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getArchiveData();
-          } else {
-            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getActiveData();
-          }
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getStudentData();
         }),
         new Promise((resolve, reject) => {
           google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getMeetingData();
@@ -78,7 +74,7 @@
   };
     
   function setEventListeners() {
-    console.log("Setting event listeners...")
+    console.log("Setting event listeners...");
     
     // Check for unsaved changes or busy state before closing the window
     window.addEventListener('beforeunload', function (e) {
@@ -89,19 +85,21 @@
     });
     
     // Add event listeners for tool bar buttons
+    document.getElementById('toggleDataButton').addEventListener('click', toggleDataView);
     document.getElementById('saveChangesButton').addEventListener('click', saveProfile);
     document.getElementById('addStudentButton').addEventListener('click', addStudent);
     document.getElementById('removeStudentButton').addEventListener('click', removeStudent);
     document.getElementById('renameStudentButton').addEventListener('click', renameStudent);
-    document.getElementById('restoreStudentButton').addEventListener('click', restoreStudent);
+    document.getElementById('activateStudentButton').addEventListener('click', activateStudent);
     document.getElementById('deleteStudentButton').addEventListener('click', deleteStudent);
     document.getElementById('addMeetingButton').addEventListener('click', addMeeting);
     document.getElementById('deleteMeetingButton').addEventListener('click', deleteMeeting);
-    document.getElementById('emailButton').addEventListener('click', composeEmail);
+    document.getElementById('composeEmailButton').addEventListener('click', composeEmail);
+    document.getElementById('sendReferralButton').addEventListener('click', sendReferral);
     document.getElementById('exportMeetingButton').addEventListener('click', exportMeeting);
     document.getElementById('exportDataButton').addEventListener('click', exportData);
-    document.getElementById('archiveButton').addEventListener('click', toggleDataView);
-    document.getElementById('backButton').addEventListener('click', toggleDataView);
+    //document.getElementById('archiveButton').addEventListener('click', toggleDataView);
+    //document.getElementById('backButton').addEventListener('click', toggleDataView);
     
     // Dropdown event listeners
     document.querySelectorAll('.dropdown').forEach(dropdown => {
@@ -118,6 +116,34 @@
           }
         }); // Small delay to prevent flickering
       });
+    });
+
+    // Toggle data view button
+    const options = [
+      { text: "<i class='bi bi-eye'></i>Active", color: "var(--green)" },
+      { text: "<i class='bi bi-eye'></i>Watch", color: "var(--orange)" },
+      { text: "<i class='bi bi-eye'></i>Archive", color: "var(--gray)" }
+    ];
+
+    // Initialize the button state
+    let currentIndex = 0;
+    const button = document.getElementById('toggleDataButton');
+    button.setAttribute('data-state', currentIndex);
+
+    button.addEventListener('click', () => {
+      if (busyFlag) {
+        showError("Error: OPERATION_IN_PROGRESS");
+        return;
+      }
+
+      // Update the index to the next option, cycling back to 0 if at the end
+      currentIndex = (currentIndex + 1) % options.length;
+
+      // Update the button text and background color
+      button.innerHTML = options[currentIndex].text;
+      button.style.backgroundColor = options[currentIndex].color;
+      button.setAttribute('data-state', currentIndex);
+      toggleDataView();
     });
     
     // Add event listener for student name select box
@@ -147,8 +173,8 @@
     });
 
     // Add event listeners for color dashboard fields
-    const selectColorElements = document.querySelectorAll('#gender, #dateOfBirth, #grade, #classroom, #specializedInstruction');
-    const inputColorElements = document.querySelectorAll('#allergies, #medications, #dietaryRestrictions, #diagnoses, #servicesPrograms, #caseManager, #roi1, #roi2, #roi3, #parentGuardianName1, #parentGuardianPhone1, #parentGuardianEmail1, #parentGuardianName2, #parentGuardianPhone2, #parentGuardianEmail2');
+    const selectColorElements = document.querySelectorAll('#gender, #dateOfBirth, #grade, #classroom, #aide, #specializedInstruction');
+    const inputColorElements = document.querySelectorAll('#allergies, #medications, #dietaryRestrictions, #diagnosis, #servicesPrograms, #caseManager, #roi1, #roi2, #roi3, #parentGuardianName1, #parentGuardianPhone1, #parentGuardianEmail1, #parentGuardianName2, #parentGuardianPhone2, #parentGuardianEmail2');
     const noColorElements = document.querySelectorAll('#notes, #meetingDate, #meetingType, #attendees, #facilitator, #scribe, #strengthsInput, #concernsInput, #actionPlan, #nextDate, #nextTime');
 
     selectColorElements.forEach(element => {
@@ -175,11 +201,13 @@
       });
     });
     
-    // Add event listener to allow deletion of select box entry with exceptions
-    document.querySelectorAll("select:not(#studentName, #meetingName)").forEach(function(select) {
+    // Highlight save changes with exceptions
+    document.querySelectorAll("select:not(#studentName, #meetingName, #templateSelect)").forEach(function(select) {
       select.addEventListener("keydown", function(event) {
         if (event.key === "Backspace" || event.key === "Delete") {
-          if (!select.closest("#addStudentModal")) {
+          // Check if the select is inside any of the specified modals
+          const isInModal = !!select.closest("#addStudentModal") || !!select.closest("#addMeetingModal") || !!select.closest("#referStudentModal");
+          if (!isInModal) {
             saveAlert();
           }
           select.value = '';
@@ -225,8 +253,9 @@
             'Allergies', 
             'Medications', 
             'Dietary Restrictions',
-            'Diagnoses',
+            'Diagnosis',
             'Services/Programs',
+            'Aide',
             'Specialized Instruction',
             'Case Manager', 
             'ROI Organization 1',
@@ -278,8 +307,10 @@
 
     const classroomSelect = document.getElementById('classroom');
     const addClassroomSelect = document.getElementById('addClassroom');
+    const referClassroomSelect = document.getElementById('referClassroom')
     classroomSelect.innerHTML = '';
     addClassroomSelect.innerHTML = '';
+    referClassroomSelect.innerHTML = '';
 
     // Populate classroom selects
     APP_SETTINGS.classroomSettings.forEach(classroom => {
@@ -295,6 +326,11 @@
         option2.value = `${className} - ${teacherName}`;
         option2.textContent = `${className} - ${teacherName}`;
         addClassroomSelect.appendChild(option2);
+
+        const option3 = document.createElement('option');
+        option3.value = `${className} - ${teacherName}`;
+        option3.textContent = `${className} - ${teacherName}`;
+        referClassroomSelect.appendChild(option3);
       }
     });
 
@@ -303,7 +339,12 @@
       select.value = '';
     });
 
-    // Set initial values for Add Student modal select boxes
+    // Set initial values for Refer Student modal select boxes
+    referStudentModal.querySelectorAll('select').forEach(function(select) {
+      select.value = '';
+    });
+
+    // Set initial values for Add Meeting modal select boxes
     addMeetingModal.querySelectorAll('select').forEach(function(select) {
       select.value = '';
     });
@@ -318,10 +359,13 @@
   /////////////////////
 
   function resetModal() {
-    const modalInputs = document.querySelectorAll('#addStudentModal input, #addStudentModal select, #renameStudentModal input, #addMeetingModal input, #addMeetingModal select, #emailModal input, #emailModal select, #emailBody, #exportMeetingModal select, #exportDataModal input, #exportDataModal select');
+    const modalInputs = document.querySelectorAll('#addStudentModal input, #addStudentModal select, #renameStudentModal input, #referStudentModal input, #referStudentModal select, #addMeetingModal input, #addMeetingModal select, #emailModal input, #emailModal select, #referStudentModal input, #referStudentModal select, #referStudentModal textarea, #emailBody, #exportMeetingModal select, #exportDataModal input, #exportDataModal select');
     
     modalInputs.forEach(function(input) {
-      if (input.id === 'emailBody') {
+      if (input.type === 'checkbox' || input.type === 'radio') {
+        // Uncheck checkboxes and radio buttons
+        input.checked = false;
+      } else if (input.id === 'emailBody') {
         input.innerHTML = '';
       } else if (input.id === 'templateSelect' || input.id === 'exportMeetingSelect' || input.id === 'dataTypeSelect' || input.id === 'fileTypeSelect') {
         input.selectedIndex = 0; // Reset to the first option
@@ -374,6 +418,7 @@
 
     const studentDataArray = [[
         student['Student ID'],
+        student['Status'],
         student['Student Name'],
         ...Object.keys(STUDENT_KEY_MAPPINGS).map(key => student[STUDENT_KEY_MAPPINGS[key]])
     ]];
@@ -419,13 +464,17 @@
         
         if (errorString.includes("401")) {
           sessionError();
-        } else {
+        }
+        else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+        }
+        else {
           showError("Error: DATABASE_FAILURE");
         }
-        saveFlag = false;
+        saveFlag = true;
         busyFlag = false;
       })
-    .saveStudentData(dataFlag, studentDataArray, meetingDataArray);
+    .saveStudentData(studentDataArray, meetingDataArray);
   }
 
   /////////////////
@@ -455,12 +504,27 @@
       busyFlag = true;
       
       // Get the form data
+      const toggleDataButton = document.getElementById('toggleDataButton');
+      const dataFilter = parseInt(toggleDataButton.getAttribute('data-state'), 10);
+      let status;
+
+      if (dataFilter === 0) {
+        status = 'Active';
+      }
+      else if (dataFilter === 1) {
+        status = 'Watch';
+      }
+      else if (dataFilter === 2) {
+        status = 'Archive';
+      }
+      
       const firstName = document.getElementById('addFirstName').value;
       const lastName = document.getElementById('addLastName').value;
       const studentName = lastName + ", " + firstName;
 
       // Create temporary student object
       const tempStudent = {
+        'Status': status,
         'Student Name': studentName,
         'Gender': document.getElementById('addGender').value,
         'Date Of Birth': document.getElementById('addDateOfBirth').value,
@@ -469,8 +533,9 @@
         'Allergies': document.getElementById('addAllergies').value,
         'Medications': document.getElementById('addMedications').value,
         'Dietary Restrictions': document.getElementById('addDietaryRestrictions').value,
-        'Diagnoses': document.getElementById('addDiagnoses').value,
+        'Diagnosis': document.getElementById('addDiagnosis').value,
         'Services/Programs': document.getElementById('addServicesPrograms').value,
+        'Aide': document.getElementById('addAide').value,
         'Specialized Instruction': document.getElementById('addSpecializedInstruction').value,
         'Case Manager': document.getElementById('addCaseManager').value,
         'ROI Organization 1': document.getElementById('addROI1').value,
@@ -492,6 +557,7 @@
 
       const newStudentArray = [
         tempStudent['Student ID'],
+        tempStudent['Status'],
         tempStudent['Student Name'],
         tempStudent['Gender'],
         tempStudent['Date Of Birth'],
@@ -500,8 +566,9 @@
         tempStudent['Allergies'],
         tempStudent['Medications'],
         tempStudent['Dietary Restrictions'],
-        tempStudent['Diagnoses'],
+        tempStudent['Diagnosis'],
         tempStudent['Services/Programs'],
+        tempStudent['Aide'],
         tempStudent['Specialized Instruction'],
         tempStudent['Case Manager'],
         tempStudent['ROI Organization 1'],
@@ -518,7 +585,6 @@
 
       google.script.run
         .withSuccessHandler(() => {
-          console.log('success');
           STUDENT_DATA.push(tempStudent);
           updateStudentNames();
                     
@@ -535,7 +601,11 @@
           
           if (errorString.includes("401")) {
             sessionError();
-          } else {
+          }
+          else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+          }
+          else {
             showError(error.message);
           }
           busyFlag = false;
@@ -545,6 +615,11 @@
   }
 
   function addStudentErrorCheck() {
+    // Get the current database filter
+    const toggleDataButton = document.getElementById('toggleDataButton');
+    const dataFilter = parseInt(toggleDataButton.getAttribute('data-state'), 10);
+    
+    // Get the form values
     const firstName = document.getElementById('addFirstName').value;
     const lastName = document.getElementById('addLastName').value;
     const gender = document.getElementById('addGender').value;
@@ -559,7 +634,6 @@
     const parentGuardianName2 = document.getElementById('addParentGuardianName2').value;
     const parentGuardianPhone2 = document.getElementById('addParentGuardianPhone2').value;
     const parentGuardianEmail2 = document.getElementById('addParentGuardianEmail2').value;
-
     const parent1Valid = parentGuardianName1 && parentGuardianPhone1 && parentGuardianEmail1;
     const parent2Valid = parentGuardianName2 && parentGuardianPhone2 && parentGuardianEmail2;
 
@@ -597,37 +671,39 @@
       return true;
     }
 
-    if (!caseManager) {
+    if (dataFilter === 0) {
+      if (!caseManager) {
       showError("Error: MISSING_CASE_MANAGER");
       return true;
-    }
+      }
 
-    // If neither Parent 1 nor Parent 2 is fully valid, show an error
-    if (!parent1Valid && !parent2Valid) {
-      showError("Error: MISSING_CONTACT");
-      return true;
+      // If neither Parent 1 nor Parent 2 is fully valid, show an error
+      if (!parent1Valid && !parent2Valid) {
+        showError("Error: MISSING_CONTACT");
+        return true;
+      }
+      
+      // Validate phone numbers
+      if (parentGuardianPhone1 && !phonePattern.test(parentGuardianPhone1)) {
+        showError("Error: INVALID_PHONE");
+        return true;
+      }
+      if (parentGuardianPhone2 && !phonePattern.test(parentGuardianPhone2)) {
+        showError("Error: INVALID_PHONE");
+        return true;
+      }
+
+      // Validate emails
+      if (parentGuardianEmail1 && !emailPattern.test(parentGuardianEmail1)) {
+        showError("Error: INVALID_EMAIL");
+        return true;
+      }
+      if (parentGuardianEmail2 && !emailPattern.test(parentGuardianEmail2)) {
+        showError("Error: INVALID_EMAIL");
+        return true;
+      }
     }
     
-    // Validate phone numbers
-    if (parentGuardianPhone1 && !phonePattern.test(parentGuardianPhone1)) {
-      showError("Error: INVALID_PHONE");
-      return true;
-    }
-    if (parentGuardianPhone2 && !phonePattern.test(parentGuardianPhone2)) {
-      showError("Error: INVALID_PHONE");
-      return true;
-    }
-
-    // Validate emails
-    if (parentGuardianEmail1 && !emailPattern.test(parentGuardianEmail1)) {
-      showError("Error: INVALID_EMAIL");
-      return true;
-    }
-    if (parentGuardianEmail2 && !emailPattern.test(parentGuardianEmail2)) {
-      showError("Error: INVALID_EMAIL");
-      return true;
-    }
-
     return false;
   }
 
@@ -662,9 +738,9 @@
 
     // Show confirmation modal
     const warningIcon = '<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>';
-    const message = `Are you sure you want to remove and archive the data for '${selectedStudent['Student Name']}'?`;
-    const title = `${warningIcon}Remove Student`;
-    const buttonText = await showModal(title, message, "Cancel", "Remove");
+    const message = `Are you sure you want to archive the data for '${selectedStudent['Student Name']}'?`;
+    const title = `${warningIcon}Archive Student`;
+    const buttonText = await showModal(title, message, "Cancel", "Archive");
 
     if (buttonText === "Cancel") {
       return;
@@ -675,7 +751,7 @@
     const selectedIndex = studentNameSelectBox.selectedIndex;
 
     // Show progress toast
-    showToast("", "Removing and archiving student...", 5000);
+    showToast("", "Archiving student...", 5000);
 
     // Server operation
     google.script.run
@@ -686,10 +762,11 @@
           studentNameSelectBox.selectedIndex = -1;
         }
             
-        STUDENT_DATA = STUDENT_DATA.filter(student => student['Student ID'] !== selectedStudentID);
+        // Update the student status in the local data - CHANGE THIS!
+        STUDENT_DATA.find(student => student['Student ID'] === selectedStudentID)['Status'] = 'Archive';
         updateStudentNames();
             
-        const toastMessage = `'${selectedStudent['Student Name']}' removed and archived successfully!`;
+        const toastMessage = `'${selectedStudent['Student Name']}' archived successfully!`;
         showToast("", toastMessage, 5000);
         playNotificationSound("remove");
         busyFlag = false;
@@ -699,12 +776,16 @@
         
         if (errorString.includes("401")) {
           sessionError();
-        } else {
+        }
+        else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+        }
+        else {
           showError(error.message);
         }
         busyFlag = false;
       })
-      .removeStudentData(selectedStudentID);
+      .updateStudentStatus(selectedStudentID, 'Archive');
   }
 
   function removeStudentErrorCheck() {
@@ -797,12 +878,16 @@
         
             if (errorString.includes("401")) {
               sessionError();
-            } else {
+            }
+            else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+            }
+            else {
               showError(error.message);
             }
             busyFlag = false;
           })
-        .renameStudent(dataFlag, selectedStudentID, newStudentName);
+        .renameStudent(selectedStudentID, newStudentName);
     };
   }
 
@@ -824,10 +909,10 @@
   }
 
   /////////////////////
-  // RESTORE STUDENT //
+  // ACTIVATE STUDENT //
   /////////////////////
 
-  async function restoreStudent() {
+  async function activateStudent() {
     if (!saveFlag) {
         showError("Error: UNSAVED_CHANGES");
         return;
@@ -838,7 +923,7 @@
         return;
     }
 
-    if (restoreStudentErrorCheck()) {
+    if (activateStudentErrorCheck()) {
         busyFlag = false;
         return;
     }
@@ -856,10 +941,10 @@
 
     // Show confirmation modal with warning icon
     const warningIcon = '<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>';
-    const message = `Are you sure you want to restore the data for '${selectedStudentName}'?`;
-    const title = `${warningIcon}Restore Student`;
+    const message = `Are you sure you want to activate the data for '${selectedStudentName}'?`;
+    const title = `${warningIcon}Activate Student`;
 
-    const buttonText = await showModal(title, message, "Cancel", "Restore");
+    const buttonText = await showModal(title, message, "Cancel", "Activate");
 
     if (buttonText === "Cancel") {
       return;
@@ -869,15 +954,15 @@
     busyFlag = true;
 
     // Show progress toast
-    showToast("", "Restoring student...", 5000);
+    showToast("", "Activating student...", 5000);
 
     // Server operation
     google.script.run
       .withSuccessHandler(() => {
-        STUDENT_DATA = STUDENT_DATA.filter(student => student['Student ID'] !== selectedStudentID);
+        STUDENT_DATA.find(student => student['Student ID'] === selectedStudentID)['Status'] = 'Active';
         updateStudentNames();
 
-        showToast("", `'${selectedStudentName}' restored successfully!`, 5000);
+        showToast("", `'${selectedStudentName}' activated successfully!`, 5000);
         playNotificationSound("success");
         busyFlag = false;
       })
@@ -886,15 +971,19 @@
         
         if (errorString.includes("401")) {
           sessionError();
-        } else {
+        }
+        else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+        }
+        else {
           showError(error.message);
         }
         busyFlag = false;
       })
-    .restoreStudentData(selectedStudentID);
+    .updateStudentStatus(selectedStudentID, 'Active');
   }
 
-  function restoreStudentErrorCheck() {
+  function activateStudentErrorCheck() {
     const studentNameSelectBox = document.getElementById('studentName');
     
     if (studentNameSelectBox.options.length === 0) {
@@ -975,7 +1064,11 @@
         
         if (errorString.includes("401")) {
           sessionError();
-        } else {
+        }
+        else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+        }
+        else {
           showError(error.message);
         }
         busyFlag = false;
@@ -1087,7 +1180,11 @@
         
           if (errorString.includes("401")) {
             sessionError();
-          } else {
+          }
+          else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+          }
+          else {
             showError(error.message);
           }
           busyFlag = false;
@@ -1095,7 +1192,6 @@
       .addMeetingData(newMeetingArray);
     };
   }
-
 
   function addMeetingErrorCheck() {
     const meetingDate = document.getElementById('addMeetingDate').value;
@@ -1105,7 +1201,7 @@
     const meetingScribe = document.getElementById('addScribe').value;
 
     if (!meetingDate) {
-      showError("Error: MISSING_MEETING_DATE");
+      showError("Error: MISSING_DATE");
       return true;
     }
     if (!meetingType) {
@@ -1195,7 +1291,11 @@
         
         if (errorString.includes("401")) {
           sessionError();
-        } else {
+        }
+        else if (errorString.includes("permission")) {
+            showError("Error: PERMISSION");
+        }
+        else {
           showError(error.message);
         }
         busyFlag = false;
@@ -1254,8 +1354,31 @@
       const recipient = document.getElementById('emailRecipient').value;
       const subject = document.getElementById('emailSubject').value;
       const body = document.getElementById('emailBody').innerHTML;
+      let attachmentType = '';
       let attachments = [];
-        
+
+      // Get the data from the Student Meetings column
+      const meetingSummaryData = {
+        'Student Name': document.getElementById('studentName').options[document.getElementById('studentName').selectedIndex].text,
+        'Meeting Date': formatDate(document.getElementById('meetingDate').value),
+        'Meeting Type': document.getElementById('meetingType').value,
+        'Attendees': document.getElementById('attendees').value,
+        'Facilitator': document.getElementById('facilitator').value,
+        'Scribe': document.getElementById('scribe').value,
+        'Strengths': document.getElementById('strengthsInput').value,
+        'Concerns': document.getElementById('concernsInput').value,
+        'Action Plan': document.getElementById('actionPlanInput').value,
+        'Next Meeting Date': formatDate(document.getElementById('nextDate').value),
+        'Next Meeting Time': formatTime(document.getElementById('nextTime').value),
+      };
+
+      // Replace any empty values with 'N/A'
+      Object.keys(meetingSummaryData).forEach((key) => {
+        if (!meetingSummaryData[key]) {
+          meetingSummaryData[key] = 'N/A';
+        }
+      });
+
       closeHtmlModal("emailModal");
 
       try {
@@ -1267,13 +1390,15 @@
         showToast("", toastMessage, toastDuration);
 
         if (template === "summary") {
-          attachments = await generateMeetingSummaryPDF();
+          attachmentType = 'summary';
+          attachments = await generateMeetingSummaryPDF(meetingSummaryData);
         }
 
         google.script.run
           .withSuccessHandler(() => {
-            playNotificationSound("success");
+            playNotificationSound("email");
             showToast("", "Email successfully sent to: " + recipient, 10000);
+            busyFlag = false;
           })
           .withFailureHandler((error) => {
             const errorString = String(error);
@@ -1283,24 +1408,15 @@
             } else {
               showError(error.message);
             }
+
+            busyFlag = false;
           })
-        .createEmail(recipient, subject, body, attachments);
+        .createEmail(recipient, subject, body, attachmentType, attachments);
       } catch {
         showError("Error: EMAIL_FAILURE");
-      } finally {
         busyFlag = false;
       }
     };
-  }
-
-  async function generateMeetingSummaryPDF() {
-    const docDefinition = createMeetingSummary();
-    const blob = await new Promise((resolve, reject) => {
-      pdfMake.createPdf(docDefinition).getBlob(resolve);
-    });
-    const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer); 
-    return Array.from(uint8Array); // Convert to array for google.script.run
   }
 
   function getEmailTemplate() {
@@ -1460,7 +1576,223 @@
       return true;
     }
 
+    // Prevent email from being sent if no meetings can be attached
+    const exportMeetingSelectBox = document.getElementById('exportMeetingSelect');
+    const templateType = document.getElementById('templateSelect').value;
+    
+    if (exportMeetingSelectBox.options.length === 0 && templateType === 'summary') {
+      showError("Error: MISSING_MEETING_DATA");
+      return true;
+    }
+
     return false;
+  }
+
+  async function sendReferral() {
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
+      return;
+    }
+
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
+    showHtmlModal("referStudentModal");
+
+    const referStudentModalButton = document.getElementById('referStudentModalButton');
+    referStudentModalButton.onclick = async function() {
+      busyFlag = true;
+        
+      if (sendReferralErrorCheck()) {
+        busyFlag = false;
+        return;
+      }
+
+      // Build the referral object
+      const lastName = document.getElementById('referLastName').value;
+      const firstName = document.getElementById('referFirstName').value;
+
+      const mapBoolean = (value) => value ? "Yes" : "No";
+      
+      const referralData = {
+        information: {
+          studentName: `${lastName}, ${firstName}`,
+          gender: document.getElementById('referGender').value,
+          grade: document.getElementById('referGrade').value,
+          classroom: document.getElementById('referClassroom').value,
+          date: formatDate(document.getElementById('referDate').value)
+        },
+        strengths: document.getElementById('referStrengths').value,
+        concerns: document.getElementById('referConcerns').value,
+        reading: {
+          phonemicAwareness: mapBoolean(document.getElementById('phonemicAwareness').checked),
+          decodingPhonics: mapBoolean(document.getElementById('decodingPhonics').checked),
+          fluency: mapBoolean(document.getElementById('fluency').checked),
+          vocabulary: mapBoolean(document.getElementById('vocabulary').checked),
+          comprehension: mapBoolean(document.getElementById('comprehension').checked)
+        },
+        writing: {
+          transcription: mapBoolean(document.getElementById('transcription').checked),
+          spellingPhonics: mapBoolean(document.getElementById('spellingPhonics').checked),
+          grammar: mapBoolean(document.getElementById('grammar').checked),
+          sentenceConstruction: mapBoolean(document.getElementById('sentenceConstruction').checked),
+          genreContentKnowledge: mapBoolean(document.getElementById('genreContentKnowledge').checked),
+          writingProcess: mapBoolean(document.getElementById('writingProcess').checked)
+        },
+        mathematics: {
+          computationalWeakness: mapBoolean(document.getElementById('computationalWeakness').checked),
+          incompleteMasteryNumberFacts: mapBoolean(document.getElementById('incompleteMasteryNumberFacts').checked),
+          mathLanguageDifficulty: mapBoolean(document.getElementById('mathLanguageDifficulty').checked),
+          visualSpatialPerceptual: mapBoolean(document.getElementById('visualSpatialPerceptual').checked),
+          difficultyTransferringKnowledge: mapBoolean(document.getElementById('difficultyTransferringKnowledge').checked),
+          makingConnections: mapBoolean(document.getElementById('makingConnections').checked)
+        },
+        behavior: {
+          unfocusedInClass: mapBoolean(document.getElementById('unfocusedInClass').checked),
+          distractionToOthers: mapBoolean(document.getElementById('distractionToOthers').checked),
+          executiveFunctioningIssues: mapBoolean(document.getElementById('executiveFunctioningIssues').checked),
+          disruptiveTalking: mapBoolean(document.getElementById('disruptiveTalking').checked),
+          difficultySelfRegulation: mapBoolean(document.getElementById('behaviorDifficultySelfRegulation').checked)
+        },
+        socialEmotional: {
+          excessiveEmotionalBehavior: mapBoolean(document.getElementById('excessiveEmotionalBehavior').checked),
+          limitedSocialSkills: mapBoolean(document.getElementById('limitedSocialSkills').checked),
+          difficultySelfRegulation: mapBoolean(document.getElementById('socialDifficultySelfRegulation').checked),
+          anxietyRelatedBehaviors: mapBoolean(document.getElementById('anxietyRelatedBehaviors').checked),
+          moodSwings: mapBoolean(document.getElementById('moodSwings').checked),
+          depressionWithdrawal: mapBoolean(document.getElementById('depressionWithdrawal').checked)
+        },
+        medical: {
+          visualPerceptualConcerns: mapBoolean(document.getElementById('visualPerceptualConcerns').checked),
+          poorFineMotorSkills: mapBoolean(document.getElementById('poorFineMotorSkills').checked),
+          poorGrossMotorSkills: mapBoolean(document.getElementById('poorGrossMotorSkills').checked),
+          chronicHealthIssues: mapBoolean(document.getElementById('chronicHealthIssues').checked),
+          speechLanguageDifficulties: mapBoolean(document.getElementById('speechLanguageDifficulties').checked)
+        },
+        interventions: document.getElementById('referInterventions').value,
+        support: {
+          pushIn: mapBoolean(document.getElementById('supportPushIn').checked),
+          pullOut: mapBoolean(document.getElementById('supportPullOut').checked),
+          resources: mapBoolean(document.getElementById('supportResources').checked),
+          other: mapBoolean(document.getElementById('supportOther').checked)
+        }
+      };
+
+      closeHtmlModal("referStudentModal");
+    
+      try {
+        const toastMessage = "Sending referral..."
+        showToast("", toastMessage, 10000);
+
+        // Get the referral email settings
+        const recipient = APP_SETTINGS.referralSettings.recipient;
+        const subject = "Student Referral";
+        const body = "A new referral form has been submitted and is attached for your review. Please review the details provided to assess the student's needs and determine the appropriate next steps.<br><br>Falcon SST Manager";
+        const attachmentType = 'referral';
+        const attachments = await generateReferralPDF(referralData);
+
+        google.script.run
+          .withSuccessHandler(() => {
+            playNotificationSound("email");
+            showToast("", "Referral successfully sent to: " + recipient, 10000);
+          })
+          .withFailureHandler((error) => {
+            const errorString = String(error);
+        
+            if (errorString.includes("401")) {
+              sessionError();
+            } else {
+              showError(error.message);
+            }
+          })
+        .createEmail(recipient, subject, body, attachmentType, attachments);
+      } catch {
+        showError("Error: EMAIL_FAILURE");
+      } finally {
+        busyFlag = false;
+      }
+    };
+  }
+
+  function sendReferralErrorCheck() {
+    const date = document.getElementById('referDate').value;
+    const firstName = document.getElementById('referFirstName').value;
+    const lastName = document.getElementById('referLastName').value;
+    const gender = document.getElementById('referGender').value;
+    const grade = document.getElementById('referGrade').value;
+    const classroom = document.getElementById('referClassroom').value;
+    const strengths = document.getElementById('referStrengths').value;
+    const concerns = document.getElementById('referConcerns').value;
+    const interventions = document.getElementById('referInterventions').value;
+    const pushIn = document.getElementById('supportPushIn').checked;
+    const pullOut = document.getElementById('supportPullOut').checked;
+    const resources = document.getElementById('supportResources').checked;
+    const other = document.getElementById('supportOther').checked;
+
+    if (!date) {
+      showError("Error: MISSING_DATE");
+      return true;
+    }
+    if (!firstName) {
+      showError("Error: MISSING_FIRST_NAME");
+      return true;
+    }
+    if (!lastName) {
+      showError("Error: MISSING_LAST_NAME");
+      return true;
+    }
+    if (!gender) {
+      showError("Error: MISSING_GENDER");
+      return true;
+    }
+    if (!grade) {
+      showError("Error: MISSING_GRADE");
+      return true;
+    }
+    if (!classroom) {
+      showError("Error: MISSING_CLASSROOM");
+      return true;
+    }
+    if (!strengths) {
+      showError("Error: MISSING_STRENGTHS");
+      return true;
+    }
+    if (!concerns) {
+      showError("Error: MISSING_CONCERNS");
+      return true;
+    }
+    if (!interventions) {
+      showError("Error: MISSING_INTERVENTIONS");
+      return true;
+    }
+    if (!pushIn && !pullOut && !resources && !other) {
+      showError("Error: MISSING_SUPPORT");
+      return true;
+    }
+    
+    return false;
+  }
+
+  async function generateMeetingSummaryPDF(meetingSummaryData) {
+    const docDefinition = createMeetingSummary(meetingSummaryData);
+    const blob = await new Promise((resolve, reject) => {
+      pdfMake.createPdf(docDefinition).getBlob(resolve);
+    });
+    const arrayBuffer = await blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    return Array.from(uint8Array); // Convert to array for google.script.run
+  }
+
+  async function generateReferralPDF(referralData) {
+    const docDefinition = createReferral(referralData);
+    const blob = await new Promise((resolve, reject) => {
+      pdfMake.createPdf(docDefinition).getBlob(resolve);
+    });
+    const arrayBuffer = await blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    return Array.from(uint8Array); // Convert to array for google.script.run
   }
 
   //////////////////
@@ -1490,11 +1822,32 @@
     exportFormsModalButton.onclick = function() {
       busyFlag = true;
       const formType = document.getElementById('exportMeetingSelect').value;
+
+      const meetingSummaryData = {
+        'Student Name': document.getElementById('studentName').options[document.getElementById('studentName').selectedIndex].text,
+        'Meeting Date': formatDate(document.getElementById('meetingDate').value),
+        'Meeting Type': document.getElementById('meetingType').value,
+        'Attendees': document.getElementById('attendees').value,
+        'Facilitator': document.getElementById('facilitator').value,
+        'Scribe': document.getElementById('scribe').value,
+        'Strengths': document.getElementById('strengthsInput').value,
+        'Concerns': document.getElementById('concernsInput').value,
+        'Action Plan': document.getElementById('actionPlanInput').value,
+        'Next Meeting Date': formatDate(document.getElementById('nextDate').value),
+        'Next Meeting Time': formatTime(document.getElementById('nextTime').value),
+      };
+
+      // Replace any empty values with 'N/A'
+      Object.keys(meetingSummaryData).forEach((key) => {
+        if (!meetingSummaryData[key]) {
+          meetingSummaryData[key] = 'N/A';
+        }
+      });
       
       closeHtmlModal("exportMeetingModal");
 
       setTimeout(function() {
-        pdfMake.createPdf(createMeetingSummary()).download('First Lutheran School - SST Meeting Summary.pdf');
+        pdfMake.createPdf(createMeetingSummary(meetingSummaryData)).download('First Lutheran School - SST Meeting Summary.pdf');
         
         busyFlag = false;
       }, 100); // Short delay to allow UI update to process before PDF generation
@@ -1526,10 +1879,8 @@
       const fileType = document.getElementById('fileTypeSelect').value;
       let fileName;
 
-      if (dataType === 'activeData') {
-        fileName = 'Active SST Data - ' + APP_SETTINGS.schoolSettings.schoolYear;
-      } else if (dataType === 'archiveData') {
-        fileName = 'Archive SST Data - ' + APP_SETTINGS.schoolSettings.schoolYear;
+      if (dataType === 'studentData') {
+        fileName = 'SST Profile Data - ' + APP_SETTINGS.schoolSettings.schoolYear;
       }
       else {
         fileName = 'SST Meeting Data - ' + APP_SETTINGS.schoolSettings.schoolYear;
@@ -1598,143 +1949,75 @@
   //////////////////////////////
 
   function toggleDataView() {
-    if (!saveFlag) {
-        showError("Error: UNSAVED_CHANGES");
-        return;
-    }
-
-    if (busyFlag) {
-        showError("Error: OPERATION_IN_PROGRESS");
-        return;
-    }
+    const toggleDataButton = document.getElementById('toggleDataButton');
+    const stateIndex = parseInt(toggleDataButton.getAttribute('data-state'), 10);
     
-    const toolbar = document.getElementById('toolbar');
-    const page = document.getElementById('page');
-    const loadingIndicator = document.getElementById('loading-indicator');
+    switch (stateIndex) {
+      // Active data
+      case 0:
+        // Update the toolbar UI
+        document.getElementById('addStudentButton').style.display = "block";
+        document.getElementById('removeStudentButton').style.display = "block";
+        document.getElementById('activateStudentButton').style.display = "none";
+        document.getElementById('deleteStudentButton').style.display = "none";
+        document.getElementById('meetingButton').style.display = "block";
+        document.getElementById('emailButton').style.display = "block";
+        document.getElementById('exportButton').style.display = "block";
+        document.getElementById('exportDataButton').style.display = "block";
+        break;
 
-    toolbar.style.display = 'none';
-    page.style.display = 'none';
-    loadingIndicator.style.display = 'block';
-    
-    dataFlag = (dataFlag === "active") ? "archive" : "active";
-
-    let studentDataPromise;
-    const header = document.getElementById('header-text');
-
-    // Track if session error has been shown
-    let sessionErrorShown = false;
-
-    if (dataFlag === "archive") {
-        header.innerText += " - Archive";
-        studentDataPromise = new Promise((resolve, reject) => {
-            google.script.run
-                .withSuccessHandler(resolve)
-                .withFailureHandler((error) => {
-                    const errorString = String(error);
-                    if (errorString.includes("401") && !sessionErrorShown) {
-                        sessionErrorShown = true;
-                        sessionError();
-                    }
-                    reject(error);
-                })
-                .getArchiveData();
-        });
-    } else {
-        header.innerText = header.innerText.replace(" - Archive", "");
-        studentDataPromise = new Promise((resolve, reject) => {
-            google.script.run
-                .withSuccessHandler(resolve)
-                .withFailureHandler((error) => {
-                    const errorString = String(error);
-                    if (errorString.includes("401") && !sessionErrorShown) {
-                        sessionErrorShown = true;
-                        sessionError();
-                    }
-                    reject(error);
-                })
-                .getActiveData();
-        });
+      // Watch data
+      case 1:
+        // Update the toolbar UI
+        document.getElementById('addStudentButton').style.display = "block";
+        document.getElementById('removeStudentButton').style.display = "block";
+        document.getElementById('activateStudentButton').style.display = "block";
+        document.getElementById('deleteStudentButton').style.display = "none";
+        document.getElementById('meetingButton').style.display = "none";
+        document.getElementById('emailButton').style.display = "none";
+        document.getElementById('exportButton').style.display = "none";
+        break;
+      
+      // Archive data
+      case 2:
+        // Update the toolbar UI
+        document.getElementById('addStudentButton').style.display = "none";
+        document.getElementById('removeStudentButton').style.display = "none";
+        document.getElementById('activateStudentButton').style.display = "block";
+        document.getElementById('deleteStudentButton').style.display = "block";
+        document.getElementById('meetingButton').style.display = "none";
+        document.getElementById('emailButton').style.display = "none";
+        document.getElementById('exportButton').style.display = "block";
+        document.getElementById('exportDataButton').style.display = "none";
+        break;
     }
 
-    const meetingDataPromise = new Promise((resolve, reject) => {
-        google.script.run
-            .withSuccessHandler(resolve)
-            .withFailureHandler((error) => {
-                const errorString = String(error);
-                if (errorString.includes("401") && !sessionErrorShown) {
-                    sessionErrorShown = true;
-                    sessionError();
-                }
-                reject(error);
-            })
-            .getMeetingData();
-    });
-
-    Promise.all([studentDataPromise, meetingDataPromise])
-        .then(([studentData, meetingData]) => {
-            STUDENT_DATA = studentData;
-            MEETING_DATA = meetingData;
-            
-            if (dataFlag === "active") {
-                document.getElementById('addStudentButton').style.display = "block";
-                document.getElementById('removeStudentButton').style.display = "block";
-                document.getElementById('restoreStudentButton').style.display = "none";
-                document.getElementById('deleteStudentButton').style.display = "none";
-                document.getElementById('meetingButton').style.display = 'block';
-                document.getElementById('emailButton').style.display = "block";
-                document.getElementById('archiveButton').style.display = "block";
-                document.getElementById('backButton').style.display = "none";
-            } else {
-                document.getElementById('addStudentButton').style.display = "none";
-                document.getElementById('removeStudentButton').style.display = "none";
-                document.getElementById('restoreStudentButton').style.display = "block";
-                document.getElementById('deleteStudentButton').style.display = "block";
-                document.getElementById('meetingButton').style.display = 'none';
-                document.getElementById('emailButton').style.display = "none";
-                document.getElementById('archiveButton').style.display = "none";
-                document.getElementById('backButton').style.display = "block";
-            }
-
-            document.getElementById('profileSearch').value = '';
-            updateStudentNames();
-
-            loadingIndicator.style.display = 'none';
-            toolbar.style.display = 'block';
-            page.style.display = 'flex';
-        })
-        .catch(error => {
-            console.error("Error fetching data:", error);
-            // Make sure UI is restored even on error
-            loadingIndicator.style.display = 'none';
-            toolbar.style.display = 'block';
-            page.style.display = 'flex';
-            
-            // Show generic error if not already handled by sessionError
-            if (!sessionErrorShown) {
-                showError("Error: DATABASE_FAILURE");
-            }
-        });
+    updateStudentNames();
   }
-  
+
   ///////////////////////
   // UTILITY FUNCTIONS //
   ///////////////////////
 
   // Build the 'studentName' select box with student names
   function updateStudentNames() {
+    const toggleDataButton = document.getElementById('toggleDataButton');
+    const dataFilter = parseInt(toggleDataButton.getAttribute('data-state'), 10);
     const studentNameSelectBox = document.getElementById('studentName');
     studentNameSelectBox.innerHTML = ''; // Reset selectbox options
     
-    if (Object.keys(STUDENT_DATA).length === 0) {
-      console.warn("WARNING: No student data found.");
-      document.getElementById('profileDataTable').style.display = 'none';
-      document.getElementById('profileWarning').style.display = '';
-    } else {
-      document.getElementById('profileDataTable').style.display = '';
-      document.getElementById('profileWarning').style.display = 'none';
+    // Filter the student data by STUDENT_DATA['Status']
+    let filteredStudentData = STUDENT_DATA;
+
+    if (dataFilter === 0) {
+      filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Active');
+    } else if (dataFilter === 1) {
+      filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Watch');
+    } else if (dataFilter === 2) {
+      filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Archive');
     }
 
-    const sortedStudentData = STUDENT_DATA.sort(function(a, b) {
+    const sortedStudentData = filteredStudentData.sort(function(a, b) {
       return a['Student Name'].localeCompare(b['Student Name']);
     });
     
@@ -1745,12 +2028,23 @@
       studentNameSelectBox.add(option);
     });
 
-    // If there are students, set the first one as selected by default
-    if (studentNameSelectBox.options.length > 0) {
-      studentNameSelectBox.value = sortedStudentData[0]['Student ID']; // Default to first student
-      studentNameSelectBox.dispatchEvent(new Event('change')); // Trigger 'change' event
+    // Check if there are students to display
+    if (sortedStudentData.length === 0) {
+        console.log("WARNING: No student data found for the selected filter.");
+        document.getElementById('profileDataTable').style.display = 'none';
+        document.getElementById('profileWarning').style.display = '';
     } else {
-      updateStudentData(); // Clear student data if no options
+        document.getElementById('profileDataTable').style.display = '';
+        document.getElementById('profileWarning').style.display = 'none';
+
+        // If there are students, set the first one as selected by default
+        studentNameSelectBox.value = sortedStudentData[0]['Student ID']; // Default to first student
+        studentNameSelectBox.dispatchEvent(new Event('change')); // Trigger 'change' event
+    }
+
+    // Clear student data if no options
+    if (studentNameSelectBox.options.length === 0) {
+        updateStudentData();
     }
   }
   
@@ -1793,7 +2087,7 @@
     exportMeetingSelectBox.innerHTML = '';
 
     if (Object.keys(MEETING_DATA).length === 0) {
-      console.warn("WARNING: No meeting data found.");
+      console.log("WARNING: No meeting data found.");
     }
 
     // Filter meetings by the selected student's Student ID
@@ -1805,7 +2099,7 @@
 
     // Show the warning and hide the meeting input if no meetings are found for the student
     if (filteredMeetings.length === 0) {
-      console.warn("WARNING: No meeting data found for this student.");
+      console.log("WARNING: No meeting data found for this student.");
       document.getElementById('meetingDataTable').style.display = 'none';
       document.getElementById('meetingWarning').style.display = '';
     } 
@@ -1858,7 +2152,6 @@
     saveChangesButton.classList.remove('tool-bar-button-unsaved');
     saveFlag = true;
     previousMeetingID = selectedMeeting;
-
   }
 
   function getIDCache() {
@@ -1981,9 +2274,9 @@
         break;
 
       // Add meeting errors
-      case "Error: MISSING_MEETING_DATE":
-        title = warningIcon + "Missing Meeting Date";
-        message = "Please enter a meeting date and try again.";
+      case "Error: MISSING_DATE":
+        title = warningIcon + "Missing Date";
+        message = "Please enter a date and try again.";
         button1 = "Close";
         break;
       
@@ -2008,6 +2301,31 @@
       case "Error: MISSING_SCRIBE":
         title = warningIcon + "Missing Scribe";
          message = "Please enter a meeting scribe and try again.";
+        button1 = "Close";
+        break;
+      
+      // Referral errors
+      case "Error: MISSING_STRENGTHS":
+        title = warningIcon + "Missing Strengths";
+         message = "Please enter student strengths and try again.";
+        button1 = "Close";
+        break;
+
+      case "Error: MISSING_CONCERNS":
+        title = warningIcon + "Missing Concerns";
+         message = "Please enter student concerns and try again.";
+        button1 = "Close";
+        break;
+
+      case "Error: MISSING_INTERVENTIONS":
+        title = warningIcon + "Missing Interventions";
+         message = "Please enter interventions/modifications and try again.";
+        button1 = "Close";
+        break;
+
+      case "Error: MISSING_SUPPORT":
+        title = warningIcon + "Missing Support Type";
+         message = "Please select one or more support types and try again.";
         button1 = "Close";
         break;
 
@@ -2059,7 +2377,7 @@
         title = errorIcon + "Email Error";
         message = "Missing email template data. The operation could not be completed.";
         button1 = "Close";
-        break; 
+        break;
 
       case "Error: QUOTA_LIMIT":
         title = errorIcon + "Email Error";
@@ -2089,6 +2407,18 @@
       case "Error: DATABASE_FAILURE":
         title = errorIcon + "Database Error";
         message = "An unknown error occurred while connecting with the database. The operation could not be completed.";
+        button1 = "Close";
+        break;
+
+      case "Error: PERMISSION":
+        title = errorIcon + "Permission Error";
+        message = "You do not have permission to modify the database. Please contact your administrator. The operation could not be completed.";
+        button1 = "Close";
+        break;
+
+      default:
+        title = errorIcon + "Error";
+        message = errorType;
         button1 = "Close";
         break;
     }
@@ -2171,8 +2501,8 @@
   }
 
   function updateColors() {
-    const selectColorElements = document.querySelectorAll('#gender, #dateOfBirth, #grade, #classroom, #specializedInstruction');
-    const inputColorElements = document.querySelectorAll('#allergies, #medications, #dietaryRestrictions, #diagnoses, #servicesPrograms, #caseManager, #roi1, #roi2, #roi3, #parentGuardianName1, #parentGuardianPhone1, #parentGuardianEmail1, #parentGuardianName2, #parentGuardianPhone2, #parentGuardianEmail2');
+    const selectColorElements = document.querySelectorAll('#gender, #dateOfBirth, #grade, #classroom, #diagnosis, #aide, #specializedInstruction');
+    const inputColorElements = document.querySelectorAll('#allergies, #medications, #dietaryRestrictions, #servicesPrograms, #caseManager, #roi1, #roi2, #roi3, #parentGuardianName1, #parentGuardianPhone1, #parentGuardianEmail1, #parentGuardianName2, #parentGuardianPhone2, #parentGuardianEmail2');
     const noColorElements = document.querySelectorAll('#notes, #meetingName, #meetingDate, #meetingType, #attendees, #facilitator, #scribe, #strengthsInput, #concernsInput, #actionPlan, #nextDate, #nextTime');
 
     selectColorElements.forEach(element => {
@@ -2223,8 +2553,9 @@
           element.id === 'allergies' || 
           element.id === 'medications' || 
           element.id === 'dietaryRestrictions' ||  
-          element.id === 'diagnoses' || 
+          element.id === 'diagnosis' || 
           element.id === 'servicesPrograms' || 
+          element.id === 'aide' ||
           element.id === 'roi1' || 
           element.id === 'roi2' || 
           element.id === 'roi3')
