@@ -123,8 +123,11 @@
       playNotificationSound("remove");
     });
 
-    document.getElementById('silentModeSwitch').addEventListener('change', saveAlert);
-    
+    document.getElementById('silentModeSwitch').addEventListener('change', function() {
+      USER_SETTINGS.silentMode = this.checked ? 'true' : 'false';
+      saveAlert();
+    });
+      
     document.getElementById('templateSubject').addEventListener('input', saveAlert);
     document.getElementById('templateBody').addEventListener('input', saveAlert);
 
@@ -153,12 +156,12 @@
     }
 
     // Sound Effects
-    const silentModeChecked = USER_SETTINGS.silentMode === 'true'; // Convert string to boolean
-    document.getElementById('silentModeSwitch').checked = silentModeChecked;
+    const silentMode = USER_SETTINGS.silentMode === 'true'; // Convert string to boolean
     document.getElementById('alertSound').value = USER_SETTINGS.alertSound;
     document.getElementById('emailSound').value = USER_SETTINGS.emailSound;
     document.getElementById('removeSound').value = USER_SETTINGS.removeSound;
     document.getElementById('successSound').value = USER_SETTINGS.successSound;
+    document.getElementById('silentModeSwitch').checked = silentMode; // Use boolean to set switch state
 
     // School Information
     document.getElementById('schoolName').value = APP_SETTINGS.schoolSettings.schoolName || '';
@@ -167,7 +170,8 @@
     // Classroom Settings
     loadClassroomSettings(APP_SETTINGS.classroomSettings);
 
-    // Email Templates
+    // Email Settings
+    document.getElementById('referralRecipient').value = APP_SETTINGS.referralSettings.recipient || '';
     loadEmailTemplateSettings(APP_SETTINGS.emailTemplateSettings);
 
     console.log("Complete!");
@@ -278,16 +282,17 @@
     showToast("", "Saving changes...", 5000);
     busyFlag = true;
     
-    appSettings = getAppSettings();    
-
+    appSettings = getAppSettings();
+    userSettings = getUserSettings();
+    
     google.script.run
       .withSuccessHandler(() => {
         APP_SETTINGS = appSettings; // Save to global settings
-        
+        USER_SETTINGS = userSettings; // Save to global user settings
+
         // Update the UI
-        saveTheme();
+        setTheme();
         setColorPicker();
-        saveSound();
         document.getElementById('header-text').innerText = "Falcon SST Manager - " + APP_SETTINGS.schoolSettings.schoolYear;
     
         saveChangesButton.classList.remove('tool-bar-button-unsaved');
@@ -308,7 +313,36 @@
         saveFlag = false;
         busyFlag = false;
       })
-    .writeSettings(USER_SETTINGS, appSettings);
+    .writeSettings(userSettings, appSettings);
+  }
+
+  function getUserSettings() {
+    const theme = document.getElementById('theme').value;
+    let customThemeType;
+    let customThemePrimaryColor;
+    let customThemeAccentColor;
+
+    if (theme === 'custom') {
+      customThemeType = document.getElementById('themeTypeSelect').value;
+      customThemePrimaryColor = document.getElementById('primaryColorPicker').value;
+      customThemeAccentColor = document.getElementById('accentColorPicker').value;
+    } else {
+      customThemeType = '';
+      customThemePrimaryColor = '';
+      customThemeAccentColor = '';
+    }
+    
+    return {
+      theme: theme,
+      customThemeType: customThemeType, 
+      customThemePrimaryColor: customThemePrimaryColor,
+      customThemeAccentColor: customThemeAccentColor,
+      alertSound: document.getElementById('alertSound').value,
+      emailSound: document.getElementById('emailSound').value,
+      removeSound: document.getElementById('removeSound').value,
+      successSound: document.getElementById('successSound').value,
+      silentMode: document.getElementById('silentModeSwitch').checked ? 'true' : 'false'
+    };
   }
 
   function getAppSettings() {
@@ -327,6 +361,11 @@
         teacher: row.querySelector('td:nth-child(3) input').value || ''
       });
     });
+
+    // Get student referral settings
+    const referralSettings = {
+      recipient: document.getElementById('referralRecipient').value
+    };
 
     // Get email template settings
     Object.keys(EMAIL_TEMPLATE_SETTINGS).forEach((key) => {
@@ -359,6 +398,7 @@
     return {
       schoolSettings,
       classroomSettings,
+      referralSettings,
       emailTemplateSettings
     };
   }
