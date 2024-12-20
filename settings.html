@@ -31,7 +31,7 @@
   {{NAVBAR}}
   <div class="tool-bar" id="toolbar">
     <button class="tool-bar-button" id="saveChangesButton">
-      <i class="bi bi-cloud-download"></i>Save
+      <i class="bi bi-cloud-check"></i>Save
     </button>
   </div>
 
@@ -129,12 +129,12 @@
           </tr>
         </table>
         </div>
-        <span style="color: var(--text-primary-color)">
-        <label class="switch">
-          <input type="checkbox" id="silentModeSwitch">
-          <span class="slider round"></span>
-        </label>
-        Silent mode</span>
+        <div class="switch-container" style="margin-top: 10px">
+          <label class="switch">
+            <input type="checkbox" id="silentModeSwitch">
+            <span class="slider"></span>
+          </label>Silent mode
+        </div>
       </div>
     </div>
 
@@ -290,7 +290,11 @@
         <h2>Email Settings</h2>
       </div>
       <div class="column-body">
-        <h3>Edit Templates</h3>
+        <h3>Student Referral</h3>
+        <label class="block-label" for="referralRecipient">Send referrals to:</label>
+        <input class="column-input" type="text" id="referralRecipient">
+        
+        <h3>Email Templates</h3>
         <label class="block-label" for="templateType">Select template:</label>
         <select class="column-select" style="margin-bottom: 10px" id="templateType">
           <option value="referral">Referral</option>
