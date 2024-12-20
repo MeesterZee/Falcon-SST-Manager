@@ -16,28 +16,7 @@
   // MEETING SUMMARY //
   /////////////////////
 
-  function createMeetingSummary() {
-    const meetingSummaryData = {
-      'Student Name': document.getElementById('studentName').options[document.getElementById('studentName').selectedIndex].text,
-      'Meeting Date': formatDate(document.getElementById('meetingDate').value),
-      'Meeting Type': document.getElementById('meetingType').value,
-      'Attendees': document.getElementById('attendees').value,
-      'Facilitator': document.getElementById('facilitator').value,
-      'Scribe': document.getElementById('scribe').value,
-      'Strengths': document.getElementById('strengthsInput').value,
-      'Concerns': document.getElementById('concernsInput').value,
-      'Action Plan': document.getElementById('actionPlanInput').value,
-      'Next Meeting Date': formatDate(document.getElementById('nextDate').value),
-      'Next Meeting Time': formatTime(document.getElementById('nextTime').value),
-    };
-
-    // Replace any empty values with 'N/A'
-    Object.keys(meetingSummaryData).forEach((key) => {
-      if (!meetingSummaryData[key]) {
-        meetingSummaryData[key] = 'N/A';
-      }
-    });
-
+  function createMeetingSummary(meetingSummaryData) {
     const docDefinition = {
       pageSize: 'LETTER',
       pageOrientation: 'portrait',
@@ -147,6 +126,325 @@
             ]
           },
           layout: 'noBorders', margin: [0, 0, 0, 15]
+        }
+      ],
+
+      footer: function(currentPage, pageCount) {
+        return {
+          text: `2900 West Carson Street, Torrance, CA 90503 | (310) 320-9920 ext. 100 or ext. 106 | www.flfalcons.org | Page ${currentPage} of ${pageCount}`,
+          alignment: 'center',
+          bold: true,
+          margin: [0, 0, 0, 0],
+          fontSize: 9
+        };
+      },
+
+      defaultStyle: {
+        fontSize: 10,
+      },
+
+      styles: {
+        title: {
+          fontSize: 12,
+          bold: true,
+          alignment: 'center'
+        }
+      },
+
+      images: {
+        logo: { url: FORM_LOGO }
+      }
+    };
+
+    return docDefinition;
+  }
+
+  function createReferral(referralData) {
+    const docDefinition = {
+      pageSize: 'LETTER',
+      pageOrientation: 'portrait',
+      pageMargins: [36, 36, 36, 36], // Fixed margins for all pages
+
+      // Dynamic header that only shows on first page
+      header: function(currentPage, pageCount, pageSize) {
+        if (currentPage === 1) {
+          return [
+            FORM_HEADER,
+            { text: '', margin: [0, 40, 0, 0] } // Add extra space after header
+          ];
+        }
+        return null;
+      },
+
+      content: [
+        // Title section with extra top margin on first page
+        {
+          text: 'STUDENT SUCCESS TEAM - STUDENT REFERRAL',
+          style: 'title',
+          margin: [0, 80, 0, 20] // Increased top margin to accommodate header
+        },
+        
+        // Student information header
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'STUDENT INFORMATION', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+
+        // Student information
+        {
+          table: {
+            widths: ['20%', '80%'],
+            body: [
+              [{ text: 'Student name:', bold: true }, { text: referralData.information.studentName }],
+              [{ text: 'Gender:', bold: true }, { text: referralData.information.gender }],
+              [{ text: 'Grade:', bold: true }, { text: referralData.information.grade }],
+              [{ text: 'Classroom/teacher:', bold: true }, { text: referralData.information.classroom }],
+              [{ text: 'Referral date:', bold: true }, { text: referralData.information.date }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Student strengths section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'STUDENT STRENGTHS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: referralData.strengths, margin: [0, 5, 0, 15] },
+
+        // Student concerns section
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'STUDENT CONCERNS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: referralData.concerns, margin: [0, 5, 0, 15] },
+
+        // Reading
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'READING', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Difficulty with phonemic awareness:', bold: true }, { text: referralData.reading.phonemicAwareness }],
+              [{ text: 'Problems with decoding/phonics:', bold: true }, { text: referralData.reading.decodingPhonics }],
+              [{ text: 'Lack of fluency:', bold: true }, { text: referralData.reading.fluency }],
+              [{ text: 'Limited vocabulary:', bold: true }, { text: referralData.reading.vocabulary }],
+              [{ text: 'Struggles with comprehension:', bold: true }, { text: referralData.reading.comprehension }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Writing
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'WRITING', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Weak transcription skills:', bold: true }, { text: referralData.writing.transcription }],
+              [{ text: 'Challenges with spelling/phonics:', bold: true }, { text: referralData.writing.spellingPhonics }],
+              [{ text: 'Struggles with grammar:', bold: true }, { text: referralData.writing.grammar }],
+              [{ text: 'Difficulty constructing sentences:', bold: true }, { text: referralData.writing.sentenceConstruction }],
+              [{ text: 'Limited genre and content knowledge:', bold: true }, { text: referralData.writing.genreContentKnowledge }],
+              [{ text: 'Struggles with the writing process:', bold: true }, { text: referralData.writing.writingProcess }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Mathematics
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'MATHEMATICS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Computational weakness:', bold: true }, { text: referralData.mathematics.computationalWeakness }],
+              [{ text: 'Incomplete mastery of number facts:', bold: true }, { text: referralData.mathematics.incompleteMasteryNumberFacts }],
+              [{ text: 'Math language difficulties:', bold: true }, { text: referralData.mathematics.mathLanguageDifficulty }],
+              [{ text: 'Visual, spatial, and perceptual challenges:', bold: true }, { text: referralData.mathematics.visualSpatialPerceptual }],
+              [{ text: 'Difficulty transferring knowledge:', bold: true }, { text: referralData.mathematics.difficultyTransferringKnowledge }],
+              [{ text: 'Problems making connections:', bold: true }, { text: referralData.mathematics.makingConnections }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Behavior
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'BEHAVIOR', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Unfocused in class/attention issues:', bold: true }, { text: referralData.behavior.unfocusedInClass }],
+              [{ text: 'Being a distraction to others:', bold: true }, { text: referralData.behavior.distractionToOthers }],
+              [{ text: 'Executive functioning difficulties:', bold: true }, { text: referralData.behavior.executiveFunctioningIssues }],
+              [{ text: 'Disruptive or excessive talking:', bold: true }, { text: referralData.behavior.disruptiveTalking }],
+              [{ text: 'Difficulty with self-regulation:', bold: true }, { text: referralData.behavior.difficultySelfRegulation }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Social/emotional
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'SOCIAL/EMOTIONAL', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Excessive emotional behavior:', bold: true }, { text: referralData.socialEmotional.excessiveEmotionalBehavior }],
+              [{ text: 'Limited social skills:', bold: true }, { text: referralData.socialEmotional.limitedSocialSkills }],
+              [{ text: 'Difficulty with self-regulation:', bold: true }, { text: referralData.socialEmotional.difficultySelfRegulation }],
+              [{ text: 'Anxiety-related behaviors:', bold: true }, { text: referralData.socialEmotional.anxietyRelatedBehaviors }],
+              [{ text: 'Mood swings:', bold: true }, { text: referralData.socialEmotional.moodSwings }],
+              [{ text: 'Depression or withdrawal:', bold: true }, { text: referralData.socialEmotional.depressionWithdrawal }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Medical
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'MEDICAL', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Unidentified visual/perceptual concerns:', bold: true }, { text: referralData.medical.visualPerceptualConcerns }],
+              [{ text: 'Poor fine-motor skills:', bold: true }, { text: referralData.medical.poorFineMotorSkills }],
+              [{ text: 'Poor gross-motor skills:', bold: true }, { text: referralData.medical.poorGrossMotorSkills }],
+              [{ text: 'Chronic health issues:', bold: true }, { text: referralData.medical.chronicHealthIssues }],
+              [{ text: 'Speech or language difficulties:', bold: true }, { text: referralData.medical.speechLanguageDifficulties }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
+        },
+
+        // Interventions/modifications
+        {
+          table: {
+            widths: ['*'],
+            body: [[
+              { text: 'INTERVENTIONS/MODIFICATIONS', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+            ]]
+          },
+          layout: 'noBorders', margin: [0, 0, 0, 5]
+        },
+        { text: referralData.interventions, margin: [0, 5, 0, 15] },
+
+        // Support
+        { 
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                { text: 'SUPPORT TYPE', fontSize: 11, bold: true, alignment: 'center', fillColor: '#eeeeee' }
+              ]
+            ]
+          },
+          layout: 'noBorders', 
+          margin: [0, 0, 0, 5]
+        },
+        {
+          table: {
+            widths: ['40%', '60%'],
+            body: [
+              [{ text: 'Push-in intervention:', bold: true }, { text: referralData.support.pushIn }],
+              [{ text: 'Pull-out support:', bold: true }, { text: referralData.support.pullOut }],
+              [{ text: 'Resources:', bold: true }, { text: referralData.support.resources }],
+              [{ text: 'Other:', bold: true }, { text: referralData.support.other }]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 15]
         }
       ],
 
