@@ -19,7 +19,6 @@
   let cachedID = null;
   
   // Global flags
-  //let dataFlag = "active"; // Active for active data sheet, archive for archive data sheet
   let saveFlag = true; // True if all changes saved, false if unsaved changes
   let busyFlag = false; // True if backup in progress, false if backup not in progress
 
@@ -98,8 +97,6 @@
     document.getElementById('sendReferralButton').addEventListener('click', sendReferral);
     document.getElementById('exportMeetingButton').addEventListener('click', exportMeeting);
     document.getElementById('exportDataButton').addEventListener('click', exportData);
-    //document.getElementById('archiveButton').addEventListener('click', toggleDataView);
-    //document.getElementById('backButton').addEventListener('click', toggleDataView);
     
     // Dropdown event listeners
     document.querySelectorAll('.dropdown').forEach(dropdown => {
@@ -133,6 +130,11 @@
     button.addEventListener('click', () => {
       if (busyFlag) {
         showError("Error: OPERATION_IN_PROGRESS");
+        return;
+      }
+
+      if (!saveFlag) {
+        showError("Error: UNSAVED_CHANGES");
         return;
       }
 
@@ -235,14 +237,27 @@
 
     profileSearchInput.addEventListener('keyup', () => {
       const filter = profileSearchInput.value.toLowerCase();
+      const toggleDataButton = document.getElementById('toggleDataButton');
+      const dataFilter = parseInt(toggleDataButton.getAttribute('data-state'), 10);
 
       // Clear the current options in the studentNameSelectBox
       while (studentNameSelectBox.firstChild) {
         studentNameSelectBox.removeChild(studentNameSelectBox.firstChild);
       }
 
-      // Filter the STUDENT_DATA based on the search input
-      const filteredStudents = STUDENT_DATA.filter(student => {
+      // Filter STUDENT_DATA based on the selected database
+      let filteredStudentData = STUDENT_DATA;
+
+      if (dataFilter === 0) {
+        filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Active');
+      } else if (dataFilter === 1) {
+        filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Watch');
+      } else if (dataFilter === 2) {
+        filteredStudentData = STUDENT_DATA.filter(item => item['Status'] === 'Archive');
+      }
+
+      // Further filter the already filteredStudentData based on the search input
+      const filteredStudents = filteredStudentData.filter(student => {
         return Object.keys(student).some(key => {
           if ([
             'Student Name',
@@ -270,10 +285,7 @@
             'Notes'
           ].includes(key)) {
             const value = student[key] ? student[key].toString().toLowerCase() : '';
-            const isMatch = value.includes(filter);
-        
-            // Log the key being checked and whether it matches
-            return isMatch;
+            return value.includes(filter);
           }
           return false;
         });
@@ -387,16 +399,16 @@
 
   function saveProfile() {
     if (busyFlag) {
-        showError("Error: OPERATION_IN_PROGRESS");
-        return;
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
     }
 
     const studentNameSelectBox = document.getElementById('studentName');
     const meetingNameSelectBox = document.getElementById('meetingName');
 
     if (studentNameSelectBox.options.length === 0) {
-        showError("Error: MISSING_STUDENT_DATA");
-        return;
+      showError("Error: MISSING_STUDENT_DATA");
+      return;
     }
 
     const selectedStudentID = studentNameSelectBox.value;
@@ -469,7 +481,7 @@
             showError("Error: PERMISSION");
         }
         else {
-          showError("Error: DATABASE_FAILURE");
+          showError(error.message);
         }
         saveFlag = true;
         busyFlag = false;
@@ -482,13 +494,13 @@
   /////////////////
   
   async function addStudent() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
-      return;
-    }
-
     if (busyFlag) {
       showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
 
@@ -555,7 +567,7 @@
       await getAvailableID();
       tempStudent['Student ID'] = cachedID;
 
-      const newStudentArray = [
+      const newStudentArray = [[
         tempStudent['Student ID'],
         tempStudent['Status'],
         tempStudent['Student Name'],
@@ -580,8 +592,8 @@
         tempStudent['Parent/Guardian Name 2'],
         tempStudent['Parent/Guardian Phone 2'],
         tempStudent['Parent/Guardian Email 2'],
-        '' // notes
-      ];
+        '' // Notes
+      ]];
 
       google.script.run
         .withSuccessHandler(() => {
@@ -639,7 +651,7 @@
 
     // Define regular expression patterns for error handling
     const phonePattern = /^\(\d{3}\) \d{3}-\d{4}$/;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]{2,})+$/;
 
     if (!firstName) {
       showError("Error: MISSING_FIRST_NAME");
@@ -708,20 +720,20 @@
   }
 
   ////////////////////
-  // REMOVE STUDENT //
+  // ARCHIVE STUDENT //
   ////////////////////
 
   async function removeStudent() {
-    if (!saveFlag) {
-        showError("Error: UNSAVED_CHANGES");
-        return;
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
     }
     
-    if (busyFlag) {
-        showError("Error: OPERATION_IN_PROGRESS");
-        return;
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
+      return;
     }
-
+    
     if (removeStudentErrorCheck()) {
         return;
     }
@@ -804,13 +816,13 @@
   ////////////////////
   
   async function renameStudent() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
-      return;
-    }
-
     if (busyFlag) {
       showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
 
@@ -848,10 +860,11 @@
             return;
         }
 
-        // Get new name data
+        // Get new name/status data
         const firstName = document.getElementById('renameFirst').value;
         const lastName = document.getElementById('renameLast').value;
         const newStudentName = lastName + ", " + firstName;
+        const studentStatus = selectedStudent['Status'];
 
         // Close modal immediately
         closeHtmlModal("renameStudentModal");
@@ -887,7 +900,7 @@
             }
             busyFlag = false;
           })
-        .renameStudent(selectedStudentID, newStudentName);
+        .renameStudent(selectedStudentID, studentStatus, newStudentName);
     };
   }
 
@@ -908,24 +921,24 @@
     return false;
   }
 
-  /////////////////////
+  //////////////////////
   // ACTIVATE STUDENT //
-  /////////////////////
+  //////////////////////
 
   async function activateStudent() {
-    if (!saveFlag) {
-        showError("Error: UNSAVED_CHANGES");
-        return;
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
     }
     
-    if (busyFlag) {
-        showError("Error: OPERATION_IN_PROGRESS");
-        return;
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
+      return;
     }
 
     if (activateStudentErrorCheck()) {
-        busyFlag = false;
-        return;
+      busyFlag = false;
+      return;
     }
 
     // Get student data
@@ -999,13 +1012,13 @@
   ////////////////////
   
   async function deleteStudent() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
-      return;
-    }
-
     if (busyFlag) {
       showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
 
@@ -1016,12 +1029,14 @@
 
     // Get student data
     const studentNameSelectBox = document.getElementById('studentName');
-    const selectedStudent = studentNameSelectBox.options[studentNameSelectBox.selectedIndex].text;
     const selectedStudentID = studentNameSelectBox.value;
+    const selectedStudent = STUDENT_DATA.find(student => student['Student ID'] === selectedStudentID);
+    const selectedStudentName = selectedStudent['Student Name'];
+    const selectedStudentStatus = selectedStudent['Status'];
 
     // Show confirmation modal with warning icon
     const warningIcon = '<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>';
-    const message = `Are you sure you want to delete the profile and meeting data for '${selectedStudent}'? This action cannot be undone.`;
+    const message = `Are you sure you want to delete the profile and meeting data for '${selectedStudentName}'? This action cannot be undone.`;
     const title = `${warningIcon}Delete Student`;
 
     const buttonText = await showModal(title, message, "Cancel", "Delete");
@@ -1054,7 +1069,7 @@
 
         updateStudentNames();
                   
-        const toastMessage = `'${selectedStudent}' and associated meetings deleted successfully!`;
+        const toastMessage = `'${selectedStudentName}' and associated meetings deleted successfully!`;
         playNotificationSound("remove");
         showToast("", toastMessage, 5000);
         busyFlag = false;
@@ -1073,7 +1088,7 @@
         }
         busyFlag = false;
       })
-    .deleteStudentData(selectedStudentID);
+    .deleteStudentData(selectedStudentID, selectedStudentStatus);
   }
 
   function deleteStudentErrorCheck() {
@@ -1092,13 +1107,13 @@
   /////////////////
 
   async function addMeeting() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
-      return;
-    }
-
     if (busyFlag) {
       showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
 
@@ -1153,7 +1168,7 @@
       newMeeting['Meeting ID'] = meetingID;
 
       // Prepare data for Google Sheets
-      const newMeetingArray = [
+      const newMeetingArray = [[
         meetingID,
         newMeeting['Student ID'],
         newMeeting['Student Name'],
@@ -1162,7 +1177,7 @@
         newMeeting['Attendees'],
         newMeeting['Facilitator'],
         newMeeting['Scribe']
-      ];
+      ]];
 
       // Attempt to save to Google Sheets
       google.script.run
@@ -1229,19 +1244,19 @@
   ////////////////////
 
   async function deleteMeeting() {
-    if (!saveFlag) {
-        showError("Error: UNSAVED_CHANGES");
-        return;
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
     }
     
-    if (busyFlag) {
-        showError("Error: OPERATION_IN_PROGRESS");
-        return;
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
+      return;
     }
-
+    
     if (deleteMeetingErrorCheck()) {
-        busyFlag = false;
-        return;
+      busyFlag = false;
+      return;
     }
 
     // Get meeting data
@@ -1319,13 +1334,13 @@
   ///////////////////
 
   async function composeEmail() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
       return;
     }
     
-    if (busyFlag) {
-      showError("Error: OPERATION_IN_PROGRESS");
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
 
@@ -1555,7 +1570,7 @@
   function sendEmailErrorCheck() {
     const recipient = document.getElementById('emailRecipient').value;
     const body = document.getElementById('emailBody').innerHTML;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]{2,})+$/;
     const warningIcon = '<i class="bi-exclamation-triangle-fill" style="color: var(--warning-color)"></i>';
     
     if (!recipient) {
@@ -1572,7 +1587,7 @@
     }
 
     if (body.includes(warningIcon)) {
-      showError("Error: MISSING_TEMPLATE_DATA")
+      showError("Error: MISSING_TEMPLATE_DATA");
       return true;
     }
 
@@ -1588,17 +1603,21 @@
     return false;
   }
 
-  async function sendReferral() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
-      return;
-    }
+  ///////////////////
+  // SEND REFERRAL //
+  ///////////////////
 
+  async function sendReferral() {
     if (busyFlag) {
       showError("Error: OPERATION_IN_PROGRESS");
       return;
     }
     
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
+      return;
+    }
+
     showHtmlModal("referStudentModal");
 
     const referStudentModalButton = document.getElementById('referStudentModalButton');
@@ -1795,21 +1814,21 @@
     return Array.from(uint8Array); // Convert to array for google.script.run
   }
 
-  //////////////////
-  // EXPORT FORMS //
-  //////////////////
+  ////////////////////
+  // EXPORT MEETING //
+  ////////////////////
 
   function exportMeeting() {
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      return;
+    }
+    
     if (!saveFlag) {
       showError("Error: UNSAVED_CHANGES");
       return;
     }
     
-    if (busyFlag) {
-      showError("Error: OPERATION_IN_PROGRESS");
-      return;
-    }
-
     const exportMeetingSelectBox = document.getElementById('exportMeetingSelect');
     if (exportMeetingSelectBox.options.length === 0) {
       showError("Error: MISSING_MEETING_DATA");
@@ -1859,13 +1878,13 @@
   /////////////////
 
   function exportData() {
-    if (!saveFlag) {
-      showError("Error: UNSAVED_CHANGES");
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
       return;
     }
     
-    if (busyFlag) {
-      showError("Error: OPERATION_IN_PROGRESS");
+    if (!saveFlag) {
+      showError("Error: UNSAVED_CHANGES");
       return;
     }
     
@@ -2524,16 +2543,30 @@
 
     // Define patterns for phone and email validation
     const phonePattern = /^\(\d{3}\) \d{3}-\d{4}$/;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]{2,})+$/;
 
     // Validation for phone numbers
-    if ((element.id === 'parentGuardianPhone1' || element.id === 'parentGuardianPhone2') && !phonePattern.test(value)) {
-      return '';  // No color if phone format is invalid
+    if (element.id === 'parentGuardianPhone1' || element.id === 'parentGuardianPhone2') {
+      if (!phonePattern.test(value)) {
+        return ''; // No color if phone format is invalid
+      }
+      return 'var(--green)'; // Valid phone numbers get green
     }
 
     // Validation for emails
-    if ((element.id === 'parentGuardianEmail1' || element.id === 'parentGuardianEmail2') && !emailPattern.test(value)) {
-      return '';  // No color if email format is invalid
+    if (element.id === 'parentGuardianEmail1' || element.id === 'parentGuardianEmail2') {
+      if (!emailPattern.test(value)) {
+        return ''; // No color if email format is invalid
+      }
+      return 'var(--green)'; // Valid email addresses get green
+    }
+
+    // If the element is an input field but not a phone/email, restrict the color to green
+    if (element.tagName === 'INPUT') {
+      if (element.id === 'allergies' || element.id === 'medications' || element.id === 'dietaryRestrictions' || element.id === 'diagnosis' || element.id === 'servicesPrograms' || element.id === 'aide' || element.id === 'roi1' || element.id === 'roi2' || element.id === 'roi3') {
+        return 'var(--orange)';
+      }
+      return 'var(--green)';
     }
 
     // Check for specific values
@@ -2551,7 +2584,7 @@
         // ID-based coloring rules
         if (value && (
           element.id === 'allergies' || 
-          element.id === 'medications' || 
+         element.id === 'medications' || 
           element.id === 'dietaryRestrictions' ||  
           element.id === 'diagnosis' || 
           element.id === 'servicesPrograms' || 
