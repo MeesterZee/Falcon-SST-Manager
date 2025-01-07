@@ -408,7 +408,7 @@
   ///////////////////////
 
   function showError(errorType, callback = "") {
-    let icon = `<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>`;
+    const warningIcon = `<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>`;
     const errorIcon = `<i class="bi bi-x-circle-fill" style="color: var(--error-color); margin-right: 10px;"></i>`;
     let title;
     let message;
@@ -425,6 +425,12 @@
       case "Error: SAVE_FAILURE":
         title = errorIcon + "Save Error";
         message = "An unknown error occurred while saving the settings. The operation could not be completed.";
+        button1 = "Close";
+        break;
+
+      default:
+        title = errorIcon + "Error";
+        message = errorType;
         button1 = "Close";
         break;
     }
