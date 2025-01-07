@@ -1,4 +1,4 @@
-/** Falcon SST Manager - Web App v3.1 **/
+/** Falcon SST Manager - Web App v3.2 **/
 /** Falcon EDU © 2023-2025 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
@@ -77,7 +77,7 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 3.1<br>Build: 29.122024<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
+        const message = "Web App Version: 3.2<br>Build: 30.010325<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
         showModal(title, message, "Close");
       }
     </script>
@@ -108,7 +108,7 @@ function include(filename) {
 // DASHBOARD FUNCTIONS //
 /////////////////////////
 
-/** Get active data **/
+/** Get student data **/
 function getStudentData() {
   return getSheetData(STUDENT_DATA_SHEET);
 }
@@ -165,84 +165,145 @@ function getIDCache() {
 
 /** Save student data **/
 function saveStudentData(studentData, meetingData) {
-  // Cache frequently used values and references
-  const studentID = studentData[0][0];
+  const studentID = studentData[0][0]; // First column contains the student ID
+  const studentStatus = studentData[0][1]; // Second column contains the student status
   const studentDataSheet = STUDENT_DATA_SHEET;
+  const meetingDataSheet = MEETING_DATA_SHEET;
     
-  // Get last row in one call
+  // Get all student data at once
   const studentDataSheetLastRow = studentDataSheet.getLastRow();
   if (studentDataSheetLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
-    
-  // Get all student data at once, including formatted values for dates, times, and IDs
+  
   const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentData[0].length).getDisplayValues();
    
-  // Find student index - now using formatted values throughout
-  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
-    
-  // Check for duplicates using the complete formatted dataset
+  // Check for duplicate student ID's
   const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
+    
+  // Find student by ID
+  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
+
+  // Validate student status
+  const currentStatus = allStudentData[studentIndex][1];
+  if (currentStatus !== studentStatus) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
     
-  // Update student data in one operation
+  // Update student data
   studentDataSheet.getRange(studentIndex + 2, 1, 1, studentData[0].length).setValues(studentData);
     
   // Process meeting data if provided
   if (meetingData?.length > 0) {
     const meetingID = meetingData[0][0];
-    const meetingDataSheetLastRow = MEETING_DATA_SHEET.getLastRow();
+    let meetingDataSheetLastRow = meetingDataSheet.getLastRow();
       
     if (meetingDataSheetLastRow > 1) {
       // Get all meeting data at once with formatted values
-      const allMeetingData = MEETING_DATA_SHEET.getRange(2, 1, meetingDataSheetLastRow - 1, meetingData[0].length).getDisplayValues();
+      const allMeetingData = meetingDataSheet.getRange(2, 1, meetingDataSheetLastRow - 1, meetingData[0].length).getDisplayValues();
         
       const meetingIndex = allMeetingData.findIndex(row => row[0] === meetingID);
       if (meetingIndex === -1) {
         throw new Error('MISSING_MEETING_ENTRY');
       }
         
-      // Update meeting data in one operation
-      MEETING_DATA_SHEET.getRange(meetingIndex + 2, 1, 1, meetingData[0].length).setValues(meetingData);
+      // Update meeting data
+      meetingDataSheet.getRange(meetingIndex + 2, 1, 1, meetingData[0].length).setValues(meetingData);
+
+      // Get the updated sheet rows/columns and sort by date
+      meetingDataSheetLastRow = meetingDataSheet.getLastRow();
+      let meetingDataSheetLastColumn = meetingDataSheet.getLastColumn();
+      
+      if (meetingDataSheetLastRow > 1) {
+        meetingDataSheet.getRange(2, 1, meetingDataSheetLastRow - 1, meetingDataSheetLastColumn)
+          .sort({ column: 4, ascending: true });
+      }
     }
   }
-  
+
+  // Format the sheets
+  studentDataSheet.getRange('A:A').setNumberFormat('000000'); // Set ID format
+  studentDataSheet.getRange('U:U').setNumberFormat('HH:mm'); // Set time format
+  meetingDataSheet.getRange('A:B').setNumberFormat('000000'); // Set ID format
+  meetingDataSheet.getRange('M:M').setNumberFormat('HH:mm'); // Set time format
+
+  return true;
+}
+
+/** Update student status:  active, watch, archive **/
+function updateStudentStatus(studentID, studentStatus) {
+  const studentDataSheet = STUDENT_DATA_SHEET;
+
+  // Get all student data at once
+  const studentDataSheetLastRow = studentDataSheet.getLastRow();
+  if (studentDataSheetLastRow <= 1) {
+    throw new Error('MISSING_STUDENT_DATA');
+  }
+
+  const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheet.getLastColumn()).getDisplayValues();
+
+  // Check for duplicate student ID's
+  const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
+  if (duplicateCount > 1) {
+    throw new Error('DUPLICATE_ENTRY');
+  }
+
+  // Find student by ID
+  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
+  if (studentIndex === -1) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
+
+  // Validate student status
+  const currentStatus = allStudentData[studentIndex][1];
+  if (currentStatus === studentStatus) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
+
+  // Update student status
+  studentDataSheet.getRange(studentIndex + 2, 2).setValue(studentStatus);
+
   return true;
 }
 
 /** Add student data **/
 function addStudentData(studentData) {
-  // Cache sheet properties
-  const sheet = STUDENT_DATA_SHEET;
-  const studentID = studentData[0];
-  const studentLastRow = sheet.getLastRow();
-  const studentlastColumn = sheet.getLastColumn();
+  const studentID = studentData[0][0]; // First column contains the student ID
+  const studentDataSheet = STUDENT_DATA_SHEET;
     
   // Check for duplicates only if there's existing data
-  if (studentLastRow > 1) {
-    // Batch read all Student IDs in one operation and convert to 1D array for faster searching
-    const studentIDs = sheet.getRange(2, 1, studentLastRow - 1, 1).getDisplayValues().flat(); 
+  let studentDataSheetLastRow = studentDataSheet.getLastRow();
+  let studentDataSheetLastColumn = studentDataSheet.getLastColumn();
+
+  if (studentDataSheetLastRow > 1) {
+    const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheetLastColumn).getDisplayValues();
         
-    // Use indexOf for efficient duplicate checking
-    if (studentIDs.indexOf(studentID) !== -1) {
+    // Check for duplicate student ID's
+    const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
+    if (duplicateCount > 1) {
       throw new Error('DUPLICATE_ENTRY');
     }
   }
 
   // Add student data to the sheet
-  sheet.appendRow(studentData);
+  studentDataSheet.appendRow(studentData[0]);
     
-  // Perform formatting
-  sheet.getRange('A:A').setNumberFormat('000000');
+  // Format the sheet
+  studentDataSheet.getRange('A:A').setNumberFormat('000000'); // Set ID format
     
-  // Sort alphabetically by student name
-  if (studentLastRow > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, studentlastColumn).sort({ column: 3, ascending: true });
+  // Get the updated sheet rows/columns and sort alphabetically by student name
+  studentDataSheetLastRow = studentDataSheet.getLastRow();
+  studentDataSheetLastColumn = studentDataSheet.getLastColumn();
+  
+  if (studentDataSheetLastRow > 1) {
+    studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheetLastColumn)
+    .sort({ column: 3, ascending: true });
   }
 
   return true;
@@ -250,263 +311,231 @@ function addStudentData(studentData) {
 
 /** Add meeting data **/
 function addMeetingData(meetingData) {
-  // Cache sheet properties
+  const meetingID = meetingData[0][0];  // First column contains the meeting ID
+  const studentID = meetingData[0][1];  // Second column contains the student ID
   const meetingDataSheet = MEETING_DATA_SHEET;
-  const studentSheet = STUDENT_DATA_SHEET;  // Add reference to student sheet
-  const meetingID = meetingData[0];
-  const studentID = meetingData[1];  // Assuming student ID is second element
-  const meetingLastRow = meetingDataSheet.getLastRow();
+  const studentDataSheet = STUDENT_DATA_SHEET;
 
-  // First, validate that the student exists
-  const studentLastRow = studentSheet.getLastRow();
-  
-  if (studentLastRow > 1) {
-    const studentIDs = studentSheet.getRange(2, 1, studentLastRow - 1, 1).getDisplayValues().flat();
-    const duplicateCount = studentIDs.filter(id => id === studentID).length;
-    
-    if (duplicateCount > 1) {
-      throw new Error('DUPLICATE_ENTRY'); // If more than one entry is found for the student ID
-    }
-    if (studentIDs.indexOf(studentID) === -1) {
-      throw new Error('MISSING_STUDENT_ENTRY');
-    }
-  } else {
-    throw new Error('MISSING_STUDENT_DATA'); // If no students exist in the sheet
-  }
-  
-  // Check for duplicates only if there's existing data
-  if (meetingDataLastRow > 1) {
-    // Batch read all Meeting IDs in one operation and convert to 1D array for faster searching
-    const meetingIDs = meetingDataSheet.getRange(2, 1, meetingDataLastRow - 1, 1).getDisplayValues().flat();
-      
-    // Use indexOf for efficient duplicate checking
-    if (meetingIDs.indexOf(meetingID) !== -1) {
-      throw new Error('DUPLICATE_ENTRY');
-    }
-  }
-
-  // Batch all formatting operations into a single transaction
-  const formatRanges = [
-    { range: 'A:A', format: '000000' }, // Meeting ID
-    { range: 'B:B', format: '000000' }, // Student ID
-    { range: 'D:D', format: 'yyyy-mm-dd' } // Meeting Date
-  ];
-
-  // Add the meeting data to the sheet
-  meetingDataSheet.appendRow(meetingData);
-  
-  // Create a single transaction for all formatting operations
-  const formatTransaction = formatRanges.map(({ range, format }) => {
-    return () => meetingDataSheet.getRange(range).setNumberFormat(format);
-  });
-  
-  // Execute all formatting operations
-  formatTransaction.forEach(operation => operation());
-
-  // Sort only if there's more than one row of data
-  if (meetingDataLastRow > 1) {
-    const lastRow = meetingDataSheet.getLastRow();
-    const lastCol = meetingDataSheet.getLastColumn();
-    
-    // Sort by date
-    meetingDataSheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: 4, ascending: true });
-  }
-
-  return true;
-}
-
-function updateStudentStatus(studentID, status) {
-  // Cache sheet references and properties
-  const activeSheet = STUDENT_DATA_SHEET;
-  const activeLastRow = activeSheet.getLastRow();
-
-  // Early return if active data is empty
-  if (activeLastRow <= 1) {
+  // Get all student data at once
+  let studentDataSheetLastRow = studentDataSheet.getLastRow();
+  let studentDataSheetLastColumn = studentDataSheet.getLastColumn();
+  if (studentDataSheetLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
 
-  // Get all active data in one batch operation
-  const activeData = activeSheet.getRange(2, 1, activeLastRow - 1, activeSheet.getLastColumn()).getDisplayValues();
-
-  // Check for duplicate in active data
-  const duplicateCount = activeData.filter(row => row[0] === studentID).length;
+  const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheetLastColumn).getDisplayValues();
+        
+  // Check for duplicate student ID's
+  const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
 
-  // Find student index using a more efficient find method
-  const studentIndex = activeData.findIndex(row => row[0] === studentID);
-
+  // Find student by ID
+  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Update the status of the student (Status is always column 2)
-  activeSheet.getRange(studentIndex + 2, 2).setValue(status);
+  // Check for meeting duplicates only if there's existing data
+  let meetingDataSheetLastRow = meetingDataSheet.getLastRow();
+  let meetingDataSheetLastColumn = meetingDataSheet.getLastColumn();
 
-  // Sort alphabetically by student name
-  activeSheet.getRange(2, 1, activeLastRow - 1, activeSheet.getLastColumn()).sort({ column: 3, ascending: true });
+  if (meetingDataSheetLastRow > 1) {
+    const allMeetingData = meetingDataSheet.getRange(2, 1, meetingDataSheetLastRow - 1, meetingDataSheetLastColumn).getDisplayValues();
+    
+    // Check for duplicate meeting IDs
+    const meetingDuplicateCount = allMeetingData.filter(row => row[0] === meetingID).length;
+    if (meetingDuplicateCount > 0) {
+      throw new Error('DUPLICATE_ENTRY');
+    }
+  }
+
+  // Add meeting data to the sheet
+  meetingDataSheet.appendRow(meetingData[0]);  // Use first row of 2D array
+
+  // Format the sheet
+  meetingDataSheet.getRange('A:B').setNumberFormat('000000'); // Meeting ID/student ID format
+  meetingDataSheet.getRange('D:D').setNumberFormat('yyyy-mm-dd'); // Date format
+
+  // Get the updated sheet rows/columns and sort by date
+  meetingDataSheetLastRow = meetingDataSheet.getLastRow();
+  meetingDataSheetLastColumn = meetingDataSheet.getLastColumn();
+  
+  if (meetingDataSheetLastRow > 1) {
+    meetingDataSheet.getRange(2, 1, meetingDataSheetLastRow - 1, meetingDataSheetLastColumn)
+      .sort({ column: 4, ascending: true });
+  }
 
   return true;
 }
 
 /** Rename student in data **/
-function renameStudent(studentID, newStudentName) {
-  const sheet = STUDENT_DATA_SHEET;
-  const sheetLastRow = sheet.getLastRow();
+function renameStudent(studentID, studentStatus, newStudentName) {
+  const studentDataSheet = STUDENT_DATA_SHEET;
+  const meetingDataSheet = MEETING_DATA_SHEET;
   
-  if (sheetLastRow <= 1) {
+  // Get all student data at once
+  const studentDataSheetLastRow = studentDataSheet.getLastRow();
+  const studentDataSheetLastColumn = studentDataSheet.getLastColumn();
+  if (studentDataSheetLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
 
-  // Load all student data at once
-  const studentDataRange = sheet.getRange(2, 1, sheetLastRow - 1, 2);
-  const studentData = studentDataRange.getDisplayValues();
-  
-  // Find student index - now using formatted values throughout
-  const studentIndex = studentData.findIndex(row => row[0] === studentID);
-    
-  // Check for duplicates using the complete formatted dataset
-  const duplicateCount = studentData.filter(row => row[0] === studentID).length;
-  
+  const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheetLastColumn).getDisplayValues();
+
+  // Check for duplicate student ID's
+  const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
+
+  // Find student by ID
+  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Batch our writes into a single operation
-  const operations = [];
-  
-  // Update student name in student sheet
-  operations.push(() => {
-    sheet.getRange(studentIndex + 2, 3).setValue(newStudentName);
-    
-    // Sort alphabetically by student name
-    sheet.getRange(2, 1, sheetLastRow - 1, sheet.getLastColumn()).sort({ column: 3, ascending: true });
-  });
-
-  // Update meeting data sheet
-  const meetingDataSheet = MEETING_DATA_SHEET;
-  const meetingDataLastRow = meetingDataSheet.getLastRow();
-
-  if (meetingDataLastRow > 1) {
-    // Load all meeting data at once
-    const meetingRange = meetingDataSheet.getRange(2, 2, meetingDataLastRow - 1, 2);
-    const meetingData = meetingRange.getValues();
-    
-    // Find all rows that need updating
-    const rowsToUpdate = meetingData.reduce((acc, row, index) => {
-      if (row[0] == studentID) acc.push(index + 2);
-      return acc;
-    }, []);
-
-    // Batch update meeting sheet if needed
-    if (rowsToUpdate.length > 0) {
-      operations.push(() => {
-        const ranges = rowsToUpdate.map(row => 
-          meetingDataSheet.getRange(row, 3)
-        );
-        
-        // Use batch setValue for all matching rows
-        meetingDataSheet.getRangeList(ranges.map(r => r.getA1Notation())).setValue(newStudentName);
-      });
-    }
+  // Validate student status
+  const currentStatus = allStudentData[studentIndex][1];
+  if (currentStatus !== studentStatus) {
+    throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Execute all operations
-  operations.forEach(op => op());
+  // Update student name in student sheet
+  studentDataSheet.getRange(studentIndex + 2, 3).setValue(newStudentName);
+    
+  // Sort alphabetically by student name
+  if (studentDataSheetLastRow > 1) {
+    studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheet.getLastColumn())
+    .sort({ column: 3, ascending: true });
+  }
+
+  // Update meeting data if it exists
+  const meetingDataLastRow = meetingDataSheet.getLastRow();
+  if (meetingDataLastRow > 1) {
+    // Get student ID and name columns
+    const meetingData = meetingDataSheet.getRange(2, 1, meetingDataLastRow - 1, 3).getDisplayValues();
+    
+    // Find all rows that need updating
+    const rowsToUpdate = [];
+    meetingData.forEach((row, index) => {
+      if (row[1] === studentID) { // Check column B (index 1) for student ID
+        rowsToUpdate.push(index + 2);
+      }
+    });
+
+    // Update meeting sheet if matching rows found
+    if (rowsToUpdate.length > 0) {
+      // Create a range list of all cells to update
+      const ranges = rowsToUpdate.map(row => 
+        meetingDataSheet.getRange(row, 3).getA1Notation()
+      );
+      
+      // Update all matching rows at once
+      meetingDataSheet.getRangeList(ranges).setValue(newStudentName);
+    }
+  }
   
   return true;
 }
 
 /** Delete student and associated meetings from data **/
-function deleteStudentData(studentID) {
-  // Cache sheet references and properties
+function deleteStudentData(studentID, studentStatus) {
   const studentDataSheet = STUDENT_DATA_SHEET;
   const meetingDataSheet = MEETING_DATA_SHEET;
-  const studentDataLastRow = studentDataSheet.getLastRow();
   
-  // Early return if studentData is empty
-  if (studentDataLastRow <= 1) {
+  // Get all student data at once
+  const studentDataSheetLastRow = studentDataSheet.getLastRow();
+  const studentDataSheetLastColumn = studentDataSheet.getLastColumn();
+  if (studentDataSheetLastRow <= 1) {
     throw new Error('MISSING_STUDENT_DATA');
   }
   
-  // Get all studentData IDs in one batch operation
-  const studentIds = studentDataSheet
-    .getRange(2, 1, studentDataLastRow - 1, 1).getDisplayValues().flat();
+  const allStudentData = studentDataSheet.getRange(2, 1, studentDataSheetLastRow - 1, studentDataSheetLastColumn).getDisplayValues();
 
-  // Check for duplicate entries
-  const duplicateCount = studentIds.filter(id => id === studentID).length;
+  // Check for duplicate student ID's
+  const duplicateCount = allStudentData.filter(row => row[0] === studentID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
 
-  // Find student index
-  const studentIndex = studentIds.indexOf(studentID);
+  // Find student by ID
+  const studentIndex = allStudentData.findIndex(row => row[0] === studentID);
   if (studentIndex === -1) {
     throw new Error('MISSING_STUDENT_ENTRY');
   }
 
-  // Delete student from studentData (adding 2 to account for header row and 0-based index)
-  const studentRowIndex = studentIndex + 2;
-  studentDataSheet.deleteRow(studentRowIndex);
+  // Validate student status
+  const currentStatus = allStudentData[studentIndex][1];
+  if (currentStatus !== studentStatus) {
+    throw new Error('MISSING_STUDENT_ENTRY');
+  }
 
-  // Handle associated meetings
+  // Delete student from studentData (adding 2 to account for header row and 0-based index)
+  studentDataSheet.deleteRow(studentIndex + 2);
+
+  // Delete associated meetings if they exist
   const meetingDataLastRow = meetingDataSheet.getLastRow();
   if (meetingDataLastRow > 1) {
-    // Get all meeting data in one batch
-    const meetingData = meetingDataSheet
-      .getRange(2, 2, meetingDataLastRow - 1, 1)
-      .getDisplayValues();
-
-    // Find all rows to delete (in reverse order to maintain integrity)
-    const rowsToDelete = meetingData
-      .map((row, index) => row[0] === studentID ? index + 2 : null)
-      .filter(row => row !== null)
-      .reverse();
-
-    // Delete meeting rows
-    rowsToDelete.forEach(rowIndex => {
-      meetingDataSheet.deleteRow(rowIndex);
+    // Get all meeting data
+    const meetingData = meetingDataSheet.getRange(2, 1, meetingDataLastRow - 1, 3).getDisplayValues();
+    
+    // Find all rows that need to be deleted
+    const rowsToDelete = [];
+    meetingData.forEach((row, index) => {
+      if (row[1] === studentID) {
+        rowsToDelete.push(index + 2); // +2 for header row and 0-based index
+      }
     });
+
+    // Delete rows from bottom to top to avoid shifting issues
+    if (rowsToDelete.length > 0) {
+      rowsToDelete
+        .sort((a, b) => b - a) // Sort in descending order
+        .forEach(rowNum => {
+          meetingDataSheet.deleteRow(rowNum);
+        });
+    }
   }
 
   return true;
 }
 
+//////////
+//////////
+//////////
+//////////
+
 /** Delete a single meeting from data **/
 function deleteMeetingData(meetingID) {
-  // Cache sheet references and properties
   const meetingDataSheet = MEETING_DATA_SHEET;
-  const lastRow = meetingDataSheet.getLastRow();
-  const lastColumn = meetingDataSheet.getLastColumn();
   
-  // Early return if meetings sheet is empty
-  if (lastRow <= 1) {
+  
+  // Get all student data at once
+  const meetingDataSheetLastRow = meetingDataSheet.getLastRow();
+  const meetingDataSheetLastColumn = meetingDataSheet.getLastColumn();
+  if (meetingDataSheetLastRow <= 1) {
     throw new Error('MISSING_MEETING_DATA');
   }
   
-  // Get all meeting data in one batch operation
-  const meetingData = meetingDataSheet.getRange(2, 1, lastRow - 1, lastColumn).getDisplayValues();
+  const allMeetingData = meetingDataSheet.getRange(2, 1, meetingDataSheetLastRow - 1, meetingDataSheetLastColumn).getDisplayValues();
 
-  const duplicateCount = meetingData.filter(row => row[0] === meetingID).length;
+  // Check for duplicate meeting ID's
+  const duplicateCount = allMeetingData.filter(row => row[0] === meetingID).length;
   if (duplicateCount > 1) {
     throw new Error('DUPLICATE_ENTRY');
   }
 
-  // Find meeting index using more efficient find method
-  const meetingIndex = meetingData.findIndex(row => row[0] === meetingID);
+  // Find meeting in the sheet
+  const meetingIndex = allMeetingData.findIndex(row => row[0] === meetingID);
 
-  // Return early if meeting not found
   if (meetingIndex === -1) {
     throw new Error('MISSING_MEETING_ENTRY');
   }
 
   // Delete meeting (adding 2 to account for header row and 0-based index)
-  const meetingRowIndex = meetingIndex + 2;
-  meetingDataSheet.deleteRow(meetingRowIndex);
+  meetingDataSheet.deleteRow(meetingIndex + 2);
 
   return true;
 }
@@ -651,8 +680,6 @@ function createEmail(recipient, subject, body, attachmentType, attachments) {
     
     emailMessage.attachments = [blob];
   }
-
-  console.log(emailMessage);
 
   // Send the email
   try {
