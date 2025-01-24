@@ -41,8 +41,10 @@
         })
       ]);
 
-      // Set global variables
-      STUDENT_DATA = studentData;
+      // Filter student data to only active cases
+      const activeStudents = studentData.filter(student => student.Status === 'Active');
+
+      STUDENT_DATA = activeStudents;
       APP_SETTINGS = appSettings;
 
       // Set event listeners
