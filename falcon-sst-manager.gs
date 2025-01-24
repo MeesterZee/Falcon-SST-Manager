@@ -1,4 +1,4 @@
-/** Falcon SST Manager - Web App v3.2 **/
+/** Falcon SST Manager - Web App v3.3 **/
 /** Falcon EDU © 2023-2025 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
@@ -77,7 +77,7 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 3.2<br>Build: 30.010325<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
+        const message = "Web App Version: 3.3<br>Build: 31.012425<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
         showModal(title, message, "Close");
       }
     </script>
