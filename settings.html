@@ -1,317 +1,461 @@
-<!DOCTYPE html>
-<html>
+<script type="text/javascript">
+  // Global variables  
+  // let USER_SETTINGS; // Defined in HTML
+  let APP_SETTINGS;
+  let EMAIL_TEMPLATE_SETTINGS;
+  let saveFlag = true;
+  let busyFlag = false;
 
-<head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Falcon Enrollment</title>
+  // Initialize application
+  window.onload = async function() {
+    console.log("Initializing settings...");
 
-  <!-- Google Fonts: Roboto -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    const toolbar = document.getElementById('toolbar');
+    const page = document.getElementById('page');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    
+    try {
+      // Show loading indicator
+      loadingIndicator.style.display = 'block';
+      toolbar.style.display = 'none';
+      page.style.display = 'none';
 
-  <!-- Bootstrap Icons v1.11.3 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+      // Fetch data in parallel (async not needed but allows for future data streams)
+      const [appSettings] = await Promise.all([
+        new Promise((resolve, reject) => {
+          google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getAppSettings();
+        })
+      ]);
 
-  <!-- Custom libraries -->
-  <?!= include('falcon-ui.lib'); ?>
-  <?!= include('falcon-themes.lib'); ?>
-  <?!= include('falcon-sounds.lib'); ?>
+      // Set global variables
+      APP_SETTINGS = appSettings;
 
-  <!-- Import user settings from properties service -->
-  <script>
-    let USER_SETTINGS = JSON.parse('<?= userSettings ?>'); // Inject user settings
-  </script>
-</head>
+      // Populate elements with data
+      await Promise.all([
+        loadSettings()
+      ]);
 
-<body>
-  <div id="loading-indicator"></div>
-  <div id="modal-container"></div>
-  
-  {{NAVBAR}}
-  <div class="tool-bar" id="toolbar">
-    <button class="tool-bar-button" id="saveChangesButton">
-      <i class="bi bi-cloud-check"></i>Save
-    </button>
-  </div>
+      setEventListeners(); // Set event listeners last to ensure tables are built before attaching
+    
+      console.log("Initialization complete!");
+    
+    } catch (error) {
+      console.error("Error during initialization: ", error);
+    
+    } finally {
+      // Hide loading indicator and show page
+      loadingIndicator.style.display = 'none';
+      toolbar.style.display = 'block';
+      page.style.display = 'flex';
+    }
+  };
 
-  <div id="toast-container"></div>
+  function setEventListeners() {
+    console.log("Setting event listeners...");
 
-  <div class="column-container" id="page">
-  
-    <div class="column">
-      <div class="column-header">
-        <h2>User Settings</h2>
-      </div>
-      <div class="column-body">
-        <h3>Appearance</h3>
-        <label class="block-label" for="theme">Select theme:</label>
-        <select class="column-select" id="theme">
-          <option value="falconLight">Falcon (Light)</option>
-          <option value="falconDark">Falcon (Dark)</option>
-          <option value="flamingoNights">Flamingo Nights (Dark)</option>
-          <option value="monochrome">Monochrome (Light)</option>
-          <option value="purpleLightning">Purple Lightning (Dark)</option>
-          <option value="yuzu">Yuzu (Light)</option>
-          <option value="custom">Custom...</option>
-        </select>
-        <div class="table-wrapper" style="margin-top: 10px" id="customTheme">
-          <table>
-            <tr>
-              <td class="td2">Theme style:</td>
-              <td class="td2">
-                <select class="table-select" id="themeTypeSelect">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </td>
-            </tr>
-            <tr>
-              <td class="td2">Primary color:</td>
-              <td class="td2">
-                <input class="table-input" type="color" id="primaryColorPicker">
-              </td>
-            </tr>
-            <tr>
-              <td class="td2">Accent color:</td>
-              <td class="td2">
-                <input class="table-input" type="color" id="accentColorPicker">
-              </td>
-            </tr>
-          </table>
-        </div>
-        <h3>Sound Effects</h3>
-        <div class="table-wrapper" id="notificationSoundSelect">
-        <table>
-          <tr>
-            <td class="td2">Alert:</td>
-            <td class="td2">
-              <select class="table-select" id="alertSound">
-                <option value="alert01">Bonk</option>
-                <option value="alert02">Question</option>
-                <option value="alert03">Alarm</option>
-                <option value="alert04">Uh Oh</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td class="td2">Email sent:</td>
-            <td>
-              <select class="table-select" id="emailSound">
-                <option value="email01">Smile</option>
-                <option value="email02">Happy</option>
-                <option value="email03">Triad</option>
-                <option value="email04">Fly Away</option>
-                <option value="email05">Bubble</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td class="td2">Remove/delete:</td>
-            <td class="td2">
-              <select class="table-select" id="removeSound">
-                <option value="remove01">Paper</option>
-                <option value="remove02">Crunch</option>
-                <option value="remove03">Chip</option>
-              </select>
-            </td>
-          </tr>
-          <tr>
-            <td class="td2">Success:</td>
-            <td class="td2">
-              <select class="table-select" id="successSound">
-                <option value="success01">Blink</option>
-                <option value="success02">Chime</option>
-                <option value="success03">Digital</option>
-                <option value="success04">Compliment</option>
-                <option value="success05">Ambient</option>
-              </select>
-            </td>
-          </tr>
-        </table>
-        </div>
-        <div class="switch-container" style="margin-top: 10px">
-          <label class="switch">
-            <input type="checkbox" id="silentModeSwitch">
-            <span class="slider"></span>
-          </label>Silent mode
-        </div>
-      </div>
-    </div>
+    const allTextInputs = document.querySelectorAll('input[type="text"], input[type="color"], .column-input');
+    const allSelects = document.querySelectorAll('.table-select, #theme');
+    const saveChangesButton = document.getElementById('saveChangesButton');
+    const themeSelect = document.getElementById('theme');
+    const alertSoundSelect = document.getElementById('alertSound');
+    const emailSoundSelect = document.getElementById('emailSound');
+    const successSoundSelect = document.getElementById('successSound');
+    const removeSoundSelect = document.getElementById('removeSound');
 
-    <div class="column">
-      <div class="column-header">
-        <h2>School Settings</h2>
-      </div>
-      <div class="column-body">
-        <h3>School Information</h3>
-        <div class="table-wrapper">
-          <table>
-            <tr>
-              <td class="td2">School name:</td>
-              <td class="td2">
-                <input class="table-input" type="text" id="schoolName">
-              </td>
-            </tr>
-            <tr>
-              <td>School year:</td>
-              <td>
-                <select class="table-select" id="schoolYear">
-                <script>
-                  let min = new Date().getFullYear() - 10;
-                  max = min + 20;
-                  select = document.getElementById('schoolYear');
-                  for (let i = min; i<=max; i++){
-                    let opt = document.createElement('option');
-                    opt.value = i + "-" + (i + 1);
-                    opt.text = i + "-" + (i + 1);
-                    select.appendChild(opt);
-                  }
-                </script>
-                </select>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <h3>Classroom/Teacher Information</h3>
-        <div class="table-wrapper">
-          <table id="classroomSettings">
-            <thead>
-              <tr>
-                <th>Grade</th>
-                <th>Classroom</th>
-                <th>Teacher</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>TK</td>
-                <td><input type="text" class="table-input" id="classroom01"></td>
-                <td><input type="text" class="table-input" id="teacher01"></td>
-              </tr>
-              <tr>
-                <td>K</td>
-                <td><input type="text" class="table-input" id="classroom02"></td>
-                <td><input type="text" class="table-input" id="teacher02"></td>
-              </tr>
-              <tr>
-                <td>K</td>
-                <td><input type="text" class="table-input" id="classroom03"></td>
-                <td><input type="text" class="table-input" id="teacher03"></td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td><input type="text" class="table-input" id="classroom04"></td>
-                <td><input type="text" class="table-input" id="teacher04"></td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td><input type="text" class="table-input" id="classroom05"></td>
-                <td><input type="text" class="table-input" id="teacher05"></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td><input type="text" class="table-input" id="classroom06"></td>
-                <td><input type="text" class="table-input" id="teacher06"></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td><input type="text" class="table-input" id="classroom07"></td>
-                <td><input type="text" class="table-input" id="teacher07"></td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td><input type="text" class="table-input" id="classroom08"></td>
-                <td><input type="text" class="table-input" id="teacher08"></td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td><input type="text" class="table-input" id="classroom09"></td>
-                <td><input type="text" class="table-input" id="teacher09"></td>
-              </tr>
-              <tr>
-                <td>4</td>
-                <td><input type="text" class="table-input" id="classroom10"></td>
-                <td><input type="text" class="table-input" id="teacher10"></td>
-              </tr>
-              <tr>
-                <td>4</td>
-                <td><input type="text" class="table-input" id="classroom11"></td>
-                <td><input type="text" class="table-input" id="teacher11"></td>
-              </tr>
-              <tr>
-                <td>5</td>
-                <td><input type="text" class="table-input" id="classroom12"></td>
-                <td><input type="text" class="table-input" id="teacher12"></td>
-              </tr>
-              <tr>
-                <td>5</td>
-                <td><input type="text" class="table-input" id="classroom13"></td>
-                <td><input type="text" class="table-input" id="teacher13"></td>
-              </tr>
-              <tr>
-                <td>6</td>
-                <td><input type="text" class="table-input" id="classroom14"></td>
-                <td><input type="text" class="table-input" id="teacher14"></td>
-              </tr>
-              <tr>
-                <td>6</td>
-                <td><input type="text" class="table-input" id="classroom15"></td>
-                <td><input type="text" class="table-input" id="teacher15"></td>
-              </tr>
-              <tr>
-                <td>7</td>
-                <td><input type="text" class="table-input" id="classroom16"></td>
-                <td><input type="text" class="table-input" id="teacher16"></td>
-              </tr>
-              <tr>
-                <td>7</td>
-                <td><input type="text" class="table-input" id="classroom17"></td>
-                <td><input type="text" class="table-input" id="teacher17"></td>
-              </tr>
-              <tr>
-                <td>8</td>
-                <td><input type="text" class="table-input" id="classroom18"></td>
-                <td><input type="text" class="table-input" id="teacher18"></td>
-              </tr>
-              <tr>
-                <td>8</td>
-                <td><input type="text" class="table-input" id="classroom19"></td>
-                <td><input type="text" class="table-input" id="teacher19"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    window.addEventListener('beforeunload', function (e) {
+      if (!saveFlag) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
 
-    <div class="column">
-      <div class="column-header">
-        <h2>Email Settings</h2>
-      </div>
-      <div class="column-body">
-        <h3>Student Referral</h3>
-        <label class="block-label" for="referralRecipient">Send referrals to:</label>
-        <input class="column-input" type="text" id="referralRecipient">
+    allTextInputs.forEach(input => {
+      input.addEventListener('input', saveAlert);
+    });
+
+    allSelects.forEach(select => {
+      select.addEventListener('change', saveAlert);
+    });
+
+    // Add paste event listeners to rich text inputs
+    const richTextBoxes = document.querySelectorAll('.rich-text-box');
+    richTextBoxes.forEach(input => {
+      input.addEventListener("paste", function (event) {
+        // Prevent the default paste behavior
+        event.preventDefault();
+
+        // Get the plain text from the clipboard
+        const text = event.clipboardData.getData("text/plain");
+
+        // Insert the plain text at the cursor position
+        document.execCommand("insertText", false, text);
+      });
+    });
+
+    themeSelect.addEventListener('change', function() {
+      const theme = document.getElementById('theme').value;
+      const customTheme = document.getElementById('customTheme');
+
+      if (theme === "custom") {
+        customTheme.style.display = 'block';
+      } else {
+        customTheme.style.display = 'none';
+      }
+    });
+
+    alertSoundSelect.addEventListener('change', function() {
+      USER_SETTINGS.alertSound = alertSoundSelect.value;
+      playNotificationSound("alert");
+    });
+
+    emailSoundSelect.addEventListener('change', function() {
+      USER_SETTINGS.emailSound = emailSoundSelect.value;
+      playNotificationSound("email");
+    });
+
+    successSoundSelect.addEventListener('change', function() {
+      USER_SETTINGS.successSound = successSoundSelect.value;
+      playNotificationSound("success");
+    });
+
+    removeSoundSelect.addEventListener('change', function() {
+      USER_SETTINGS.removeSound = removeSound.value;
+      playNotificationSound("remove");
+    });
+
+    document.getElementById('silentModeSwitch').addEventListener('change', function() {
+      USER_SETTINGS.silentMode = this.checked ? 'true' : 'false';
+      saveAlert();
+    });
+      
+    document.getElementById('templateSubject').addEventListener('input', saveAlert);
+    document.getElementById('templateBody').addEventListener('input', saveAlert);
+
+    saveChangesButton.addEventListener('click', saveSettings);
+
+    console.log("Complete!");
+  }
+
+  ///////////////////
+  // LOAD SETTINGS //
+  ///////////////////
+
+  function loadSettings() {
+    console.log("Loading settings...");
+
+    // Appearance
+    setColorPicker();
+    const themeSelect = document.getElementById('theme');
+    const customTheme = document.getElementById('customTheme');
+    themeSelect.value = USER_SETTINGS.theme;
+
+    if (USER_SETTINGS.theme === "custom") {
+      customTheme.style.display = 'block';
+    } else {
+      customTheme.style.display = 'none';
+    }
+
+    // Sound Effects
+    const silentMode = USER_SETTINGS.silentMode === 'true'; // Convert string to boolean
+    document.getElementById('alertSound').value = USER_SETTINGS.alertSound;
+    document.getElementById('emailSound').value = USER_SETTINGS.emailSound;
+    document.getElementById('removeSound').value = USER_SETTINGS.removeSound;
+    document.getElementById('successSound').value = USER_SETTINGS.successSound;
+    document.getElementById('silentModeSwitch').checked = silentMode; // Use boolean to set switch state
+
+    // School Information
+    document.getElementById('schoolName').value = APP_SETTINGS.schoolSettings.schoolName || '';
+    document.getElementById('schoolYear').value = APP_SETTINGS.schoolSettings.schoolYear || '';
+
+    // Classroom Settings
+    loadClassroomSettings(APP_SETTINGS.classroomSettings);
+
+    // Email Settings
+    document.getElementById('referralRecipient').value = APP_SETTINGS.referralSettings.recipient || '';
+    loadEmailTemplateSettings(APP_SETTINGS.emailTemplateSettings);
+
+    console.log("Complete!");
+  }
+
+  function setColorPicker() {
+    const themeTypeSelect = document.getElementById('themeTypeSelect');
+    const primaryColorPicker = document.getElementById('primaryColorPicker');
+    const accentColorPicker = document.getElementById('accentColorPicker');
+
+    themeTypeSelect.value = getComputedStyle(document.documentElement).getPropertyValue('color-scheme').trim();
+    primaryColorPicker.value = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+    accentColorPicker.value = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+  }
+
+  function loadClassroomSettings(classroomSettings) {
+    const tableRows = document.querySelectorAll('#classroomSettings tbody tr');
+
+    // Iterate over each row and populate columns 2 and 3 with data from classroomSettings
+    tableRows.forEach((row, index) => {
+      const classroomData = classroomSettings[index] || {};
+
+      // Column 2: Classroom
+      const classroomInput = row.querySelector('td:nth-child(2) input');
+      classroomInput.value = classroomData.classroom || '';
+
+      // Column 3: Teacher
+      const teacherInput = row.querySelector('td:nth-child(3) input');
+      teacherInput.value = classroomData.teacher || '';
+    });
+  }
+
+  function loadEmailTemplateSettings(emailTemplateSettings) {
+    EMAIL_TEMPLATE_SETTINGS = {
+      referral: {
+        subject: emailTemplateSettings.referral.subject || '',
+        body: emailTemplateSettings.referral.body || '',
+        unsavedSubject: '',
+        unsavedBody: ''
+      },
+      initial: {
+        subject: emailTemplateSettings.initial.subject || '',
+        body: emailTemplateSettings.initial.body || '',
+        unsavedSubject: '',
+        unsavedBody: ''
+      },
+      reminder: {
+        subject: emailTemplateSettings.reminder.subject || '',
+        body: emailTemplateSettings.reminder.body || '',
+        unsavedSubject: '',
+        unsavedBody: ''
+      },
+      summary: {
+        subject: emailTemplateSettings.summary.subject || '',
+        body: emailTemplateSettings.summary.body || '',
+        unsavedSubject: '',
+        unsavedBody: ''
+      }
+    };
+
+    // Load initial email template settings into UI
+    const templateTypeSelect = document.getElementById('templateType');
+    const templateSubjectInput = document.getElementById('templateSubject');
+    const templateBodyInput = document.getElementById('templateBody');
+
+    // Set the default template type to "referral"
+    const defaultTemplate = EMAIL_TEMPLATE_SETTINGS.referral;
+    templateSubjectInput.value = defaultTemplate.subject;
+    templateBodyInput.innerHTML = defaultTemplate.body;
+
+    // Update unsaved subject on input
+    templateSubjectInput.addEventListener('input', function() {
+      const selectedTemplate = EMAIL_TEMPLATE_SETTINGS[templateTypeSelect.value];
+      if (selectedTemplate) {
+        selectedTemplate.unsavedSubject = templateSubjectInput.value;
+      }
+    });
+
+    // Update unsaved body on input
+    templateBodyInput.addEventListener('input', function() {
+      const selectedTemplate = EMAIL_TEMPLATE_SETTINGS[templateTypeSelect.value];
+      if (selectedTemplate) {
+        selectedTemplate.unsavedBody = templateBodyInput.innerHTML;
+      }
+    });
+
+    // Handle template type change
+    templateTypeSelect.addEventListener('change', function() {
+      const selectedTemplate = EMAIL_TEMPLATE_SETTINGS[templateTypeSelect.value];
+      if (selectedTemplate) {
+        templateSubjectInput.value = selectedTemplate.unsavedSubject || selectedTemplate.subject;
+        templateBodyInput.innerHTML = selectedTemplate.unsavedBody || selectedTemplate.body;
+      }
+    });
+  }
+
+  ///////////////////
+  // SAVE SETTINGS //
+  ///////////////////
+
+  function saveSettings() {
+    if (busyFlag) {
+      showError("Error: OPERATION_IN_PROGRESS");
+      busyFlag = false;
+      return;
+    }
+
+    showToast("", "Saving changes...", 5000);
+    busyFlag = true;
+    
+    appSettings = getAppSettings();
+    userSettings = getUserSettings();
+    
+    google.script.run
+      .withSuccessHandler(() => {
+        APP_SETTINGS = appSettings; // Save to global settings
+        USER_SETTINGS = userSettings; // Save to global user settings
+
+        // Update the UI
+        setTheme();
+        setColorPicker();
+        document.getElementById('header-text').innerText = "Falcon SST Manager - " + APP_SETTINGS.schoolSettings.schoolYear;
+    
+        saveChangesButton.classList.remove('tool-bar-button-unsaved');
+        playNotificationSound("success");
+        showToast("", "Settings saved!", 5000);
+        saveFlag = true;
+        busyFlag = false;
+      })
+      .withFailureHandler((error) => {
+        const errorString = String(error);
         
-        <h3>Email Templates</h3>
-        <label class="block-label" for="templateType">Select template:</label>
-        <select class="column-select" style="margin-bottom: 10px" id="templateType">
-          <option value="referral">Referral</option>
-          <option value="initial">Initial Meeting</option>
-          <option value="reminder">Meeting Reminder</option>
-          <option value="summary">Meeting Summary</option>
-        </select>
-        <label class="block-label" for="templateSubject">Subject:</label>
-        <input class="column-input" style="margin-bottom: 10px;" type="text" id="templateSubject">
-        <div class="label-text">Message:</div>
-        <div class="rich-text-box" contenteditable="true" id="templateBody"></div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="javascript-code">
-    <?!= include('settings.js'); ?>
-  </div>
-</body>
+        if (errorString.includes("401")) {
+          sessionError();
+        } else {
+          showError("Error: SAVE_FAILURE");
+        }
+        
+        saveFlag = false;
+        busyFlag = false;
+      })
+    .writeSettings(userSettings, appSettings);
+  }
 
-</html>
+  function getUserSettings() {
+    const theme = document.getElementById('theme').value;
+    let customThemeType;
+    let customThemePrimaryColor;
+    let customThemeAccentColor;
+
+    if (theme === 'custom') {
+      customThemeType = document.getElementById('themeTypeSelect').value;
+      customThemePrimaryColor = document.getElementById('primaryColorPicker').value;
+      customThemeAccentColor = document.getElementById('accentColorPicker').value;
+    } else {
+      customThemeType = '';
+      customThemePrimaryColor = '';
+      customThemeAccentColor = '';
+    }
+    
+    return {
+      theme: theme,
+      customThemeType: customThemeType, 
+      customThemePrimaryColor: customThemePrimaryColor,
+      customThemeAccentColor: customThemeAccentColor,
+      alertSound: document.getElementById('alertSound').value,
+      emailSound: document.getElementById('emailSound').value,
+      removeSound: document.getElementById('removeSound').value,
+      successSound: document.getElementById('successSound').value,
+      silentMode: document.getElementById('silentModeSwitch').checked ? 'true' : 'false'
+    };
+  }
+
+  function getAppSettings() {
+    // Get school settings    
+    const schoolSettings = {
+      schoolYear: document.getElementById('schoolYear').value,
+      schoolName: document.getElementById('schoolName').value
+    };
+
+    // Get classroom settings
+    const classroomSettings = [];
+    const tableBody = document.querySelector('#classroomSettings tbody');
+    tableBody.querySelectorAll('tr').forEach((row) => {
+      classroomSettings.push({
+        classroom: row.querySelector('td:nth-child(2) input').value || '',
+        teacher: row.querySelector('td:nth-child(3) input').value || ''
+      });
+    });
+
+    // Get student referral settings
+    const referralSettings = {
+      recipient: document.getElementById('referralRecipient').value
+    };
+
+    // Get email template settings
+    Object.keys(EMAIL_TEMPLATE_SETTINGS).forEach((key) => {
+      const template = EMAIL_TEMPLATE_SETTINGS[key];
+      if (template.unsavedSubject !== "" || template.unsavedBody !== "") {
+        template.subject = template.unsavedSubject || template.subject;
+        template.body = template.unsavedBody || template.body;
+      }
+    });
+    
+    const emailTemplateSettings = {
+      referral: {
+        subject: EMAIL_TEMPLATE_SETTINGS.referral.subject,
+        body: EMAIL_TEMPLATE_SETTINGS.referral.body
+      },
+      initial: {
+        subject: EMAIL_TEMPLATE_SETTINGS.initial.subject,
+        body: EMAIL_TEMPLATE_SETTINGS.initial.body
+      },
+      reminder: {
+        subject: EMAIL_TEMPLATE_SETTINGS.reminder.subject,
+        body: EMAIL_TEMPLATE_SETTINGS.reminder.body
+      },
+      summary: {
+        subject: EMAIL_TEMPLATE_SETTINGS.summary.subject,
+        body: EMAIL_TEMPLATE_SETTINGS.summary.body
+      }
+    };
+
+    return {
+      schoolSettings,
+      classroomSettings,
+      referralSettings,
+      emailTemplateSettings
+    };
+  }
+
+  ///////////////////////
+  // UTILITY FUNCTIONS //
+  ///////////////////////
+
+  function showError(errorType, callback = "") {
+    const warningIcon = `<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>`;
+    const errorIcon = `<i class="bi bi-x-circle-fill" style="color: var(--error-color); margin-right: 10px;"></i>`;
+    let title;
+    let message;
+    let button1;
+    let button2;
+
+    switch (errorType) {
+      case "Error: OPERATION_IN_PROGRESS":
+        title = warningIcon + "Operation In Progress";
+        message = "Please wait until the operation completes and try again.";
+        button1 = "Close";
+        break;
+
+      case "Error: SAVE_FAILURE":
+        title = errorIcon + "Save Error";
+        message = "An unknown error occurred while saving the settings. The operation could not be completed.";
+        button1 = "Close";
+        break;
+
+      default:
+        title = errorIcon + "Error";
+        message = errorType;
+        button1 = "Close";
+        break;
+    }
+
+    playNotificationSound("alert");
+    showModal(title, message, button1, button2);
+  }
+
+  async function sessionError() {
+    const errorIcon = `<i class="bi bi-x-circle-fill" style="color: var(--error-color); margin-right: 10px;"></i>`;
+    const title = `${errorIcon}Session Expired`;
+    const message = "The current session has expired. Please sign in with Google and try again.";
+    
+    playNotificationSound("alert");
+    const buttonText = await showModal(title, message, "Cancel", "Sign in");
+       
+    if (buttonText === "Sign in") {
+      const signInUrl = "https://accounts.google.com";
+      const signInTab = window.open(signInUrl, "_blank");
+    }
+  }
+  
+  function saveAlert() {
+    saveFlag = false;
+    saveChangesButton.classList.add('tool-bar-button-unsaved');
+  }
+
+</script>
