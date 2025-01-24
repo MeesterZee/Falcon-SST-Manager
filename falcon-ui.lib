@@ -1245,7 +1245,7 @@
     
     setTimeout(() => {
       resetModal();
-    }, 100); // Adjust this delay to match your modal's close animation duration
+    }, 200); // Adjust this delay to match your modal's close animation duration
   }
 
 </script>
