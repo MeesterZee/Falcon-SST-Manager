@@ -1355,6 +1355,7 @@
     // Reset the warning before the modal is opened
     document.getElementById('templateWarning').style.display = 'none';
     showHtmlModal("emailModal");
+    getEmailTemplate();
 
     const sendEmailModalButton = document.getElementById('sendEmailModalButton');
     sendEmailModalButton.onclick = async function() {
@@ -1491,7 +1492,6 @@
         break;
 
       default:
-        recipient.value = "";
         subjectTemplate.value = "";
         bodyTemplate.innerHTML = "";
         break;
