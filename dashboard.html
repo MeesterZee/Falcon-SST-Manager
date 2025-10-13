@@ -33,18 +33,15 @@
 
 <body>
   <div id="loading-indicator"></div>
-  <div id="modal-container"></div>
 
   {{NAVBAR}}
   <div class="tool-bar" id="toolbar">
     <button class="tool-bar-button" style="background-color: var(--green)" id="toggleDataButton">
       <i class="bi bi-eye"></i>Active
     </button>
-    
     <button class="tool-bar-button" id="saveChangesButton">
       <i class="bi bi-cloud-check"></i>Save
     </button>
-    
     <div class="dropdown">
       <button class="dropdown-button" id="studentButton"><i class="bi bi-person-vcard"></i>Profile</button>
       <div class="dropdown-content">
@@ -55,7 +52,6 @@
         <button id="renameStudentButton"><i class="bi bi-pencil"></i>Rename student</button>
       </div>
     </div>
-    
     <div class="dropdown">
       <button class="dropdown-button" id="meetingButton"><i class="bi bi-journal-text"></i>Meeting</button>
       <div class="dropdown-content">
@@ -63,7 +59,6 @@
         <button id="deleteMeetingButton"><i class="bi bi-trash3"></i>Delete meeting</button>
       </div>
     </div>
-    
     <div class="dropdown">
       <button class="dropdown-button" id="emailButton"><i class="bi bi-envelope"></i>Email</button>
       <div class="dropdown-content">
@@ -71,7 +66,6 @@
         <button id="sendReferralButton"><i class="bi bi-card-checklist"></i>Send referral</button>
       </div>
     </div>
-    
     <div class="dropdown">
       <button class="dropdown-button" id="exportButton"><i class="bi bi-box-arrow-up"></i>Export</button>
       <div class="dropdown-content">
@@ -79,29 +73,31 @@
         <button id="exportDataButton"><i class="bi bi-database"></i>Application data</button>
       </div>
     </div>
+    <button class="tool-bar-button" id="helpButton">
+      <i class="bi bi-question-circle"></i>Help
+    </button>
   </div>
 
   <div id="toast-container"></div>
+
+  <div class="page-container" id="page">
   
-  <div class="column-container" id="page">
+  <div class="column-container">
     <!-- STUDENT INFORMATION COLUMN -->
     <div class="column">
-      <div class="column-header">
-        <h2>Student Profile</h2>
-      </div>
+      <div class="column-header">Student Profile</div>
       <div class="column-body">
-        <div class="warning" style="display: none; margin-top: 15px;" id="profileWarning">
+        <div class="warning" id="profileWarning">
           <i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>
           <b>No students found!</b>
         </div>
         <div id="profileDataTable">
-        <h3>Profile Search</h3>
-        <div class="search-container" style="margin-top: 0; margin-bottom: 10px;">
+        <div class="search-container">
           <i class="bi bi-search search-icon"></i>
           <input type="text" id="profileSearch" placeholder="Search...">
         </div>
-        <h3>Student Information</h3>
-        <div class="table-wrapper">
+        <h2 class="rounded-top">Student Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>Student name:</td>
@@ -215,8 +211,8 @@
             </tr>
           </table>
         </div>
-        <h3>Release Of Information</h3>
-        <div class="table-wrapper">
+        <h2 class="rounded-top">Release Of Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>ROI organization:</td>
@@ -232,8 +228,8 @@
             </tr>
             </table>
         </div>
-        <h3>Parent/Guardian Information</h3>
-        <div class="table-wrapper">
+        <h2 class="rounded-top">Parent/Guardian Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>Parent/guardian name:</td>
@@ -249,8 +245,8 @@
             </tr>
           </table>
         </div>
-        <h3>Parent/Guardian Information</h3>
-        <div class="table-wrapper">
+        <h2 class="rounded-top">Parent/Guardian Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>Parent/guardian name:</td>
@@ -266,27 +262,24 @@
             </tr>
           </table>
         </div>
-        <h3>Notes</h3>
-        <textarea class="column-textarea" id="notes"></textarea>
+        <h2 class="rounded-top">Notes</h2>
+        <textarea class="column-textarea" style="margin: 0" id="notes"></textarea>
       </div>
       </div>
     </div>
 
     <!-- MEETINGS COLUMN -->
     <div class="column">
-      <div class="column-header">
-        <h2>Student Meetings</h2>
-      </div>
+      <div class="column-header">Student Meetings</div>
       <div class="column-body">
-        <div class="warning" style="margin-top: 15px;" id="meetingWarning">
+        <div class="warning" id="meetingWarning">
           <i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color);"></i>
           <b>No meetings found!</b>
         </div>
         <div id="meetingDataTable">
-        <h3>Meeting Dates</h3>
-        <select class="column-select" id="meetingName"></select>
-        <h3>Meeting Information</h3>
-        <div class="table-wrapper">
+        <select class="column-select" style="margin-bottom: 20px" id="meetingName"></select>
+        <h2 class="rounded-top">Meeting Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>Date:</td>
@@ -317,14 +310,14 @@
             </tr>
           </table>
         </div>
-        <h3>Student Strengths</h3>
+        <h2 class="rounded-top">Student Strengths</h2>
         <textarea class="column-textarea" id="strengthsInput"></textarea>
-        <h3>Student Concerns</h3>
+        <h2 class="rounded-top">Student Concerns</h2>
         <textarea class="column-textarea" id="concernsInput"></textarea>
-        <h3>Student Action Plan</h3>
+        <h2 class="rounded-top">Student Action Plan</h2>
         <textarea class="column-textarea" id="actionPlanInput"></textarea>
-        <h3>Schedule Meeting</h3>
-        <div class="table-wrapper" style="margin-top: 10px">
+        <h2 class="rounded-top">Schedule Meeting</h2>
+        <div class="no-header-table-wrapper" style="margin-bottom: 0;">
           <table class="no-header-table">
             <tr>
               <td>Next meeting date:</td>
@@ -343,16 +336,14 @@
     <!-- MODALS -->
 
     <!-- ADD STUDENT MODAL -->
-    <div class="modal-html" id="addStudentModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Add Student
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Student Information</h3>
-          <div class="table-wrapper">
+    <dialog class="action-modal" id="addStudentModal" data-select-reset-index="-1">
+      <div class="action-header">Add Student
+          <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="action-container">
+        <div class="action-content">
+          <h2 class="rounded-top">Student Information</h2>
+          <div class="no-header-table-wrapper">
             <table class="no-header-table">
               <tr>
                 <td>Student first name:</td>
@@ -465,8 +456,8 @@
               </tr>
             </table>
           </div>
-          <h3>Release Of Information</h3>
-          <div class="table-wrapper">
+          <h2 class="rounded-top">Release Of Information</h2>
+          <div class="no-header-table-wrapper">
             <table class="no-header-table">
               <tr>
                 <td>ROI organization:</td>
@@ -482,8 +473,8 @@
               </tr>
             </table>
           </div>
-          <h3>Parent/Guardian Information</h3>
-          <div class="table-wrapper">
+          <h2 class="rounded-top">Parent/Guardian Information</h2>
+          <div class="no-header-table-wrapper">
             <table class="no-header-table">
               <tr>
                 <td>Parent/guardian name:</td>
@@ -499,8 +490,8 @@
               </tr>
             </table>
           </div>
-          <h3>Parent/Guardian Information</h3>
-          <div class="table-wrapper">
+          <h2 class="rounded-top">Parent/Guardian Information</h2>
+          <div class="no-header-table-wrapper">
             <table class="no-header-table">
               <tr>
                 <td>Parent/guardian name:</td>
@@ -516,45 +507,48 @@
               </tr>
             </table>
           </div>          
-        <div class="modal-htmlbutton">
+        <div class="action-btn">
           <button id="addStudentModalButton">Add Student</button>
         </div>
       </div>
-    </div>
-  </div>
+    </dialog>
 
   <!-- RENAME STUDENT MODAL -->
-    <div class="modal-html" id="renameStudentModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Rename Student
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
+  <dialog class="action-modal" id="renameStudentModal">
+    <div class="action-header">Rename Student
+      <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+    </div>
+    <div class="action-container">
+      <div class="action-content">
+        <h2 class="rounded-top" id="currentStudentName"></h2>
+        <div class="no-header-table-wrapper">
+          <table class="no-header-table">
+            <tr>
+              <td>New first name:</td>
+              <td><input class="table-input" type="text" id="renameFirst"></td>
+            </tr>
+            <tr>
+              <td>New last name:</td>
+              <td><input class="table-input" type="text" id="renameLast"></td>
+            </tr>
+          </table>
         </div>
-        <div class="modal-htmlbody">
-          <h3 id="currentStudentName"></h3>
-          <label class="block-label" for="renameFirst">New first name:</label>
-          <input class="column-input" style="margin-bottom: 10px;" type="text" id="renameFirst">
-          <label class="block-label" for="renameLast">New last name:</label>
-          <input class="column-input" type="text" id="renameLast">
-          <div class="modal-htmlbutton">
-            <button id="renameStudentModalButton">Rename Student</button>
-          </div>
+        <div class="action-btn">
+          <button id="renameStudentModalButton">Rename Student</button>
         </div>
       </div>
     </div>
+  </dialog>
   
   <!-- ADD MEETING MODAL -->
-    <div class="modal-html" id="addMeetingModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Add Meeting
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Meeting Information</h3>
-          <div class="table-wrapper">
+    <dialog class="action-modal" id="addMeetingModal" data-select-reset-index="-1">
+      <div class="action-header">Add Meeting
+        <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+        <div class="action-container">
+          <div class="action-content">
+          <h2 class="rounded-top">Meeting Information</h2>
+          <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>Date:</td>
@@ -585,24 +579,22 @@
             </tr>
           </table>
         </div>
-          <div class="modal-htmlbutton">
+          <div class="action-btn">
             <button id="addMeetingModalButton">Add Meeting</button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
 
   <!-- EMAIL MODAL -->
-    <div class="modal-html" id="emailModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Compose Email
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Templates</h3>
-          <label class="block-label" for="templateSelect">Select template:</label>
+    <dialog class="action-modal" id="composeEmailModal">
+      <div class="action-header">Compose Email
+        <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="action-container">
+        <div class="action-content">
+          <h2 class="rounded-full">Templates</h2>
+          <label class="input-label" for="templateSelect"><b>Select template:</b></label>
           <select class="column-select" id="templateSelect">
             <option value="none">None</option>
             <option value="referral">Referral</option>
@@ -610,35 +602,33 @@
             <option value="reminder">Meeting Reminder</option>
             <option value="summary">Meeting Summary</option>
           </select>
-          <div class="warning" style="margin-top: 10px; display: none;" id="templateWarning">
+          <div class="warning" id="templateWarning" style="margin-top: 10px; display: none;">
             <i class="bi-exclamation-triangle-fill" style="color: var(--warning-color)"></i>
             <b>Template data missing!</b>
           </div>
-          <h3>Compose Email</h3>
-          <label class="block-label" for="emailRecipient">To:</label>
+          <h2 class="rounded-full" style="margin-top: 20px">Compose Email</h2>
+          <label class="input-label" for="emailRecipient"><b>To:</b></label>
           <input class="column-input" style="margin-bottom: 10px;" type="text" id="emailRecipient">
-          <label class="block-label" for="emailSubject">Subject:</label>
+          <label class="input-label" for="emailSubject"><b>Subject:</b></label>
           <input class="column-input" style="margin-bottom: 10px;" type="text" id="emailSubject">
-          <div class="label-text">Message:</div>
+          <div class="label-text"><b>Message:</b></div>
           <div class="rich-text-box" contenteditable="true" id="emailBody"></div>
-          <div class="modal-htmlbutton">
-            <button id="sendEmailModalButton">Send Email</button>
+          <div class="action-btn">
+            <button id="composeEmailModalButton">Send Email</button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
 
     <!-- REFER STUDENT MODAL -->
-    <div class="modal-html" id="referStudentModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Student Referral
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Student Information</h3>
-          <div class="table-wrapper">
+    <dialog class="action-modal" id="referStudentModal" data-select-reset-index="-1">
+      <div class="action-header">Student Referral
+        <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="action-container">
+        <div class="action-content">
+          <h2 class="rounded-top">Student Information</h2>
+          <div class="no-header-table-wrapper">
             <table class="no-header-table">
               <tr>
                 <td>Student first name:</td>
@@ -690,14 +680,14 @@
             </table>
           </div>
           
-          <h3>Student Strengths</h3>
+          <h2 class="rounded-top">Student Strengths</h2>
           <textarea class="column-textarea" style="height: 100px" id="referStrengths"></textarea>
 
-          <h3>Student Concerns</h3>
+          <h2 class="rounded-top">Student Concerns</h2>
           <textarea class="column-textarea" style="height: 100px" id="referConcerns"></textarea>
 
-          <h3>Reading</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Reading</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="phonemicAwareness">
@@ -730,8 +720,8 @@
             </div>
           </div>
 
-          <h3>Written Expression</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Written Expression</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="transcription">
@@ -770,8 +760,8 @@
             </div>
           </div>
 
-          <h3>Mathematics</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Mathematics</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="computationalWeakness">
@@ -810,7 +800,7 @@
             </div>
           </div>
 
-          <h3>Behavior</h3>
+          <h2 class="rounded-top">Behavior</h2>
           <div class="switch-container">
             <div>
               <label class="switch">
@@ -844,8 +834,8 @@
             </div>
           </div>
 
-          <h3>Social/Emotional</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Social/Emotional</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="excessiveEmotionalBehavior">
@@ -884,8 +874,8 @@
             </div>
           </div>
 
-          <h3>Medical</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Medical</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="visualPerceptualConcerns">
@@ -918,11 +908,11 @@
             </div>
           </div>
 
-          <h3>Interventions/Modifications</h3>
+          <h2 class="rounded-top">Interventions/Modifications</h2>
           <textarea class="column-textarea" style="height: 100px" id="referInterventions"></textarea>
 
-          <h3>Support Type</h3>
-          <div class="switch-container">
+          <h2 class="rounded-top">Support Type</h2>
+          <div class="switch-container" style="margin-bottom: 20px; border-top-left-radius: 0; border-top-right-radius: 0;">
             <div>
               <label class="switch">
                 <input type="checkbox" id="supportPushIn">
@@ -949,58 +939,85 @@
             </div>
           </div>
 
-          <div class="modal-htmlbutton">
+          <div class="action-btn">
             <button id="referStudentModalButton">Send Referral</button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
 
     <!-- EXPORT MEETING SUMMARY MODAL -->
-    <div class="modal-html" id="exportMeetingModal">
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Export Meeting Summary
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Meeting Dates</h3>
-          <label class="block-label" for="exportMeetingSelect">Select meeting:</label>
-          <select class="column-select" id="exportMeetingSelect">
+    <dialog class="action-modal" id="exportMeetingModal">
+      <div class="action-header">Export Meeting Summary
+        <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="action-container">
+        <div class="action-content">
+          <h2 class="rounded-full">Meeting Dates</h2>
+          <label class="input-label" for="exportMeetingSelect"><b>Select meeting:</b></label>
+          <select class="column-select" style="margin-bottom: 20px;" id="exportMeetingSelect">
             <!-- Populate on load -->
           </select>
-          <div class="modal-htmlbutton">
+          <div class="action-btn">
             <button id="exportMeetingModalButton">Download Summary</button>
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
 
     <!-- EXPORT DATA MODAL -->
-    <div class="modal-html" id="exportDataModal" >
-      <div class="modal-htmlcontent">
-        <div class="modal-htmlheader">
-          <h2>Export Application Data
-            <button class="modal-htmlclose"><i class="bi-close bi-x-circle-fill"></i></button>
-          </h2>
-        </div>
-        <div class="modal-htmlbody">
-          <h3>Application Data Type</h3>
-          <label class="block-label" for="dataTypeSelect">Select data:</label>
-          <select class="column-select" id="dataTypeSelect" style="margin-bottom: 0">
+    <dialog class="action-modal" id="exportDataModal" >
+      <div class="action-header">Export Application Data
+        <button class="action-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="action-container">
+        <div class="action-content">
+          <h2 class="rounded-full">Application Data Type</h2>
+          <label class="input-label" for="dataTypeSelect"><b>Select data:</b></label>
+          <select class="column-select" style="margin-bottom: 20px" id="dataTypeSelect">
             <option value="studentData">Student profile data</option>
             <option value="meetingData">Student meeting data</option>
           </select>
-          <h3>File Type</h3>
-          <label class="block-label" for="fileTypeSelect">Select file type:</label>
-          <select class="column-select" id="fileTypeSelect" style="margin-bottom: 0">
+          <h2 class="rounded-full">File Type</h2>
+          <label class="input-label" for="fileTypeSelect"><b>Select file type:</b></label>
+          <select class="column-select" style="margin-bottom: 20px" id="fileTypeSelect">
             <option value="csv">Comma Separated Values (.csv)</option>
             <option value="xlsx">Microsoft Excel (.xlsx)</option>
           </select>
-          <div class="modal-htmlbutton">
+          <div class="action-btn">
             <button id="exportDataModalButton">Download Data</button>
           </div>
+        </div>
+      </div>
+    </dialog>
+  </div>
+
+  <div class="sidebar-container" id="sidebarContainer">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div id="sidebarTitle"></div>
+        <button class="sidebar-close-btn"><i class="bi-close bi-x-circle-fill"></i></button>
+      </div>
+      <div class="sidebar-content-container">
+        <div class="sidebar-content" id="helpSidebar">
+          <details>
+            <summary>Coming soon!</summary>
+            <div class="section-container">
+              Nothing to see here.
+            </div>
+          </details>
+          <details>
+            <summary>Coming soon!</summary>
+            <div class="section-container">
+              Nothing to see here.
+            </div>
+          </details>
+          <details>
+            <summary style="margin-bottom: 0">Coming soon!</summary>
+            <div class="section-container" style="margin-top: 10px; margin-bottom: 0;">
+              Nothing to see here.
+            </div>
+          </details>
         </div>
       </div>
     </div>
