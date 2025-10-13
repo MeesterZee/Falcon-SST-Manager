@@ -37,16 +37,14 @@
 
   <div id="toast-container"></div>
 
-  <div class="column-container" id="page">
+  <div class="page-container" id="page">
   
+  <div class="column-container">
     <div class="column">
-      <div class="column-header">
-        <h2>User Settings</h2>
-      </div>
+      <div class="column-header">User Settings</div>
       <div class="column-body">
-        <h3>Appearance</h3>
-        <label class="block-label" for="theme">Select theme:</label>
-        <select class="column-select" id="theme">
+        <h2 class="rounded-top">Appearance</h2>
+        <select class="column-select" style="border-top-left-radius: 0; border-top-right-radius: 0;" id="theme">
           <option value="falconLight">Falcon (Light)</option>
           <option value="falconDark">Falcon (Dark)</option>
           <option value="flamingoNights">Flamingo Nights (Dark)</option>
@@ -55,7 +53,8 @@
           <option value="yuzu">Yuzu (Light)</option>
           <option value="custom">Custom...</option>
         </select>
-        <div class="table-wrapper" style="margin-top: 10px" id="customTheme">
+        <div class="no-header-table-wrapper" style="margin: 10px 0 0 0" id="customTheme">
+          <h2 class="rounded-top">Custom Theme</h2>
           <table class="no-header-table">
             <tr>
               <td>Theme style:</td>
@@ -79,8 +78,8 @@
             </tr>
           </table>
         </div>
-        <h3>Sound Effects</h3>
-        <div class="table-wrapper" id="notificationSoundSelect">
+        <h2 class="rounded-top" style="margin-top: 20px">Sound Effects</h2>
+        <div class="no-header-table-wrapper" id="notificationSoundSelect">
         <table class="no-header-table">
           <tr>
             <td>Alert:</td>
@@ -129,7 +128,7 @@
           </tr>
         </table>
         </div>
-        <div class="switch-container" style="margin-top: 10px">
+        <div class="switch-container">
           <label class="switch">
             <input type="checkbox" id="silentModeSwitch">
             <span class="slider"></span>
@@ -139,12 +138,10 @@
     </div>
 
     <div class="column">
-      <div class="column-header">
-        <h2>School Settings</h2>
-      </div>
-      <div class="column-body">
-        <h3>School Information</h3>
-        <div class="table-wrapper">
+      <div class="column-header">School Settings</div>
+      <div class="column-body" style="display: block">
+        <h2 class="rounded-top">School Information</h2>
+        <div class="no-header-table-wrapper">
           <table class="no-header-table">
             <tr>
               <td>School name:</td>
@@ -172,9 +169,9 @@
             </tr>
           </table>
         </div>
-        <h3>Classroom/Teacher Information</h3>
-        <div class="table-wrapper">
-          <table id="classroomSettings">
+        <h2 class="rounded-full">Classroom/Teacher Information</h2>
+        <div class="table-wrapper-fixed">
+          <table class="table-fixed" id="classroomSettings">
             <thead>
               <tr>
                 <th>Grade</th>
@@ -285,25 +282,22 @@
     </div>
 
     <div class="column">
-      <div class="column-header">
-        <h2>Email Settings</h2>
-      </div>
+      <div class="column-header">Email Settings</div>
       <div class="column-body">
-        <h3>Student Referral</h3>
-        <label class="block-label" for="referralRecipient">Send referrals to:</label>
-        <input class="column-input" type="text" id="referralRecipient">
-        
-        <h3>Email Templates</h3>
-        <label class="block-label" for="templateType">Select template:</label>
+        <h2 class="rounded-full">Student Referral</h2>
+        <label class="input-label" for="referralRecipient"><b>Send referrals to:</b></label>
+        <input class="column-input" style="margin-bottom: 20px" type="text" id="referralRecipient">
+        <h2 class="rounded-full">Email Templates</h2>
+        <label class="input-label" for="templateType">Select template:</label>
         <select class="column-select" style="margin-bottom: 10px" id="templateType">
           <option value="referral">Referral</option>
           <option value="initial">Initial Meeting</option>
           <option value="reminder">Meeting Reminder</option>
           <option value="summary">Meeting Summary</option>
         </select>
-        <label class="block-label" for="templateSubject">Subject:</label>
+        <label class="input-label" for="templateSubject"><b>Subject:</b></label>
         <input class="column-input" style="margin-bottom: 10px;" type="text" id="templateSubject">
-        <div class="label-text">Message:</div>
+        <div class="label-text"><b>Message:</b></div>
         <div class="rich-text-box" contenteditable="true" id="templateBody"></div>
       </div>
     </div>
