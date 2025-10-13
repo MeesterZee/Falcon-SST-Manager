@@ -16,7 +16,7 @@
   // Global IDs
   let previousStudentID;
   let previousMeetingID;
-  let cachedID = null;
+  //let cachedID = null;
   
   // Global flags
   let saveFlag = true; // True if all changes saved, false if unsaved changes
@@ -97,6 +97,7 @@
     document.getElementById('sendReferralButton').addEventListener('click', sendReferral);
     document.getElementById('exportMeetingButton').addEventListener('click', exportMeeting);
     document.getElementById('exportDataButton').addEventListener('click', exportData);
+    document.getElementById('helpButton').addEventListener('click', showHelpSidebar);
     
     // Dropdown event listeners
     document.querySelectorAll('.dropdown').forEach(dropdown => {
@@ -366,33 +367,6 @@
     console.log("Complete!");
   }
 
-  /////////////////////
-  // MODAL FUNCTIONS //
-  /////////////////////
-
-  function resetModal() {
-    const modalInputs = document.querySelectorAll('#addStudentModal input, #addStudentModal select, #renameStudentModal input, #referStudentModal input, #referStudentModal select, #addMeetingModal input, #addMeetingModal select, #emailModal input, #emailModal select, #referStudentModal input, #referStudentModal select, #referStudentModal textarea, #emailBody, #exportMeetingModal select, #exportDataModal input, #exportDataModal select');
-    
-    modalInputs.forEach(function(input) {
-      if (input.type === 'checkbox' || input.type === 'radio') {
-        // Uncheck checkboxes and radio buttons
-        input.checked = false;
-      } else if (input.id === 'emailBody') {
-        input.innerHTML = '';
-      } else if (input.id === 'templateSelect' || input.id === 'exportMeetingSelect' || input.id === 'dataTypeSelect' || input.id === 'fileTypeSelect') {
-        input.selectedIndex = 0; // Reset to the first option
-      } else {
-        input.value = '';
-      }
-    });
-
-    // Reset the scroll position of all modal bodies
-    const modalBodies = document.querySelectorAll('.modal-htmlbody');
-    modalBodies.forEach(modalBody => {
-      modalBody.scrollTop = 0;
-    });
-  }
-
   //////////////////
   // SAVE PROFILE //
   //////////////////
@@ -504,7 +478,7 @@
       return;
     }
 
-    showHtmlModal("addStudentModal");
+    showActionModal("addStudentModal");
 
     const addStudentModalButton = document.getElementById("addStudentModalButton");
 
@@ -561,11 +535,11 @@
         'Parent/Guardian Email 2': document.getElementById('addParentGuardianEmail2').value,
       };
 
-      closeHtmlModal("addStudentModal");
-      showToast("", "Adding student...", 5000);
+      closeActionModal("addStudentModal");
+      showToast("", "Adding student...", 10000);
 
-      await getAvailableID();
-      tempStudent['Student ID'] = cachedID;
+      //await getAvailableID();
+      tempStudent['Student ID'] = await getAvailableId();
 
       const newStudentArray = [[
         tempStudent['Student ID'],
@@ -752,7 +726,7 @@
     const warningIcon = '<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>';
     const message = `Are you sure you want to archive the data for '${selectedStudent['Student Name']}'?`;
     const title = `${warningIcon}Archive Student`;
-    const buttonText = await showModal(title, message, "Cancel", "Archive");
+    const buttonText = await showAlertModal(title, message, "Cancel", "Archive");
 
     if (buttonText === "Cancel") {
       return;
@@ -849,7 +823,7 @@
     document.getElementById('currentStudentName').innerHTML = oldStudentName;
 
     // Show the rename modal
-    showHtmlModal("renameStudentModal");
+    showActionModal("renameStudentModal");
     const renameStudentModalButton = document.getElementById("renameStudentModalButton");
     
     renameStudentModalButton.onclick = async function() {
@@ -867,7 +841,7 @@
         const studentStatus = selectedStudent['Status'];
 
         // Close modal immediately
-        closeHtmlModal("renameStudentModal");
+        closeActionModal("renameStudentModal");
         
         // Show initial toast
         showToast("", "Renaming student...", 5000);
@@ -957,7 +931,7 @@
     const message = `Are you sure you want to activate the data for '${selectedStudentName}'?`;
     const title = `${warningIcon}Activate Student`;
 
-    const buttonText = await showModal(title, message, "Cancel", "Activate");
+    const buttonText = await showAlertModal(title, message, "Cancel", "Activate");
 
     if (buttonText === "Cancel") {
       return;
@@ -1039,7 +1013,7 @@
     const message = `Are you sure you want to delete the profile and meeting data for '${selectedStudentName}'? This action cannot be undone.`;
     const title = `${warningIcon}Delete Student`;
 
-    const buttonText = await showModal(title, message, "Cancel", "Delete");
+    const buttonText = await showAlertModal(title, message, "Cancel", "Delete");
 
     if (buttonText === "Cancel") {
       return;
@@ -1125,7 +1099,7 @@
     }
 
     // Show the Add Meeting modal
-    showHtmlModal("addMeetingModal");
+    showActionModal("addMeetingModal");
 
     const addMeetingModalButton = document.getElementById("addMeetingModalButton");
 
@@ -1159,17 +1133,17 @@
       };
 
       // Close the modal and show progress toast
-      closeHtmlModal("addMeetingModal");
-      showToast("", "Adding meeting...", 5000);
+      closeActionModal("addMeetingModal");
+      showToast("", "Adding meeting...", 10000);
 
       // Get meeting ID
-      await getAvailableID();
-      const meetingID = cachedID;
-      newMeeting['Meeting ID'] = meetingID;
+      //await getAvailableID();
+      //const meetingID = cachedID;
+      newMeeting['Meeting ID'] = await getAvailableId();
 
       // Prepare data for Google Sheets
       const newMeetingArray = [[
-        meetingID,
+        newMeeting['Meeting ID'],
         newMeeting['Student ID'],
         newMeeting['Student Name'],
         newMeeting['Date'],
@@ -1277,7 +1251,7 @@
     const warningIcon = '<i class="bi bi-exclamation-triangle-fill" style="color: var(--warning-color); margin-right: 10px;"></i>';
     const message = `Are you sure you want to delete the meeting '${meetingName}'? This action cannot be undone.`;
     const title = `${warningIcon}Delete Meeting`;
-    const buttonText = await showModal(title, message, "Cancel", "Delete");
+    const buttonText = await showAlertModal(title, message, "Cancel", "Delete");
     
     if (buttonText === "Cancel") {
         return;
@@ -1354,11 +1328,11 @@
     
     // Reset the warning before the modal is opened
     document.getElementById('templateWarning').style.display = 'none';
-    showHtmlModal("emailModal");
+    showActionModal("composeEmailModal");
     getEmailTemplate();
 
-    const sendEmailModalButton = document.getElementById('sendEmailModalButton');
-    sendEmailModalButton.onclick = async function() {
+    const composeEmailModalButton = document.getElementById('composeEmailModalButton');
+    composeEmailModalButton.onclick = async function() {
       busyFlag = true;
         
       if (sendEmailErrorCheck()) {
@@ -1395,7 +1369,7 @@
         }
       });
 
-      closeHtmlModal("emailModal");
+      closeActionModal("composeEmailModal");
 
       try {
         const toastMessage = template === "summary" 
@@ -1618,7 +1592,7 @@
       return;
     }
 
-    showHtmlModal("referStudentModal");
+    showActionModal("referStudentModal");
 
     const referStudentModalButton = document.getElementById('referStudentModalButton');
     referStudentModalButton.onclick = async function() {
@@ -1699,7 +1673,7 @@
         }
       };
 
-      closeHtmlModal("referStudentModal");
+      closeActionModal("referStudentModal");
     
       try {
         const toastMessage = "Sending referral..."
@@ -1835,11 +1809,14 @@
       return;
     }
     
-    showHtmlModal("exportMeetingModal");
+    showActionModal("exportMeetingModal");
     const exportFormsModalButton = document.getElementById('exportMeetingModalButton');
     
     exportFormsModalButton.onclick = function() {
       busyFlag = true;
+
+      showToast("", "Exporting meeting...", 5000);
+
       const formType = document.getElementById('exportMeetingSelect').value;
 
       const meetingSummaryData = {
@@ -1863,14 +1840,18 @@
         }
       });
       
-      closeHtmlModal("exportMeetingModal");
+      closeActionModal("exportMeetingModal");
 
       setTimeout(function() {
         pdfMake.createPdf(createMeetingSummary(meetingSummaryData)).download('First Lutheran School - SST Meeting Summary.pdf');
         
+        playNotificationSound("success");
+        showToast("", "Meeting exported successfully!", 5000);
         busyFlag = false;
       }, 100); // Short delay to allow UI update to process before PDF generation
     };
+
+    
   }
 
   /////////////////
@@ -1888,11 +1869,13 @@
       return;
     }
     
-    showHtmlModal("exportDataModal");
+    showActionModal("exportDataModal");
     const exportDataModalButton = document.getElementById('exportDataModalButton');
     
     exportDataModalButton.onclick = function() {
       busyFlag = true;
+
+      showToast("", "Exporting data...", 5000);
     
       const dataType = document.getElementById('dataTypeSelect').value;
       const fileType = document.getElementById('fileTypeSelect').value;
@@ -1925,6 +1908,8 @@
                 showError(error.message);
               }
               busyFlag = false;
+              playNotificationSound("success");
+              showToast("", "Data exported successfully!", 5000);
             })
           .getCsv(dataType);
           break;
@@ -1944,6 +1929,8 @@
               a.click();
               URL.revokeObjectURL(url);
               busyFlag = false;
+              playNotificationSound("success");
+              showToast("", "Data exported successfully!", 5000);
             })
             .withFailureHandler((error) => {
               const errorString = String(error);
@@ -1959,8 +1946,16 @@
           break;
       }
       
-      closeHtmlModal("exportDataModal");
+      closeActionModal("exportDataModal");
     };
+  }
+
+  //////////////////
+  // HELP SIDEBAR //
+  //////////////////
+
+  function showHelpSidebar() {
+    showSidebar("Help", "helpSidebar");
   }
 
   //////////////////////////////
@@ -2173,20 +2168,10 @@
     previousMeetingID = selectedMeeting;
   }
 
-  function getIDCache() {
-    return new Promise((resolve, reject) => {  // Add reject parameter
+  async function getAvailableId() {
+    return new Promise((resolve, reject) => {
       google.script.run
-        .withSuccessHandler((idCache) => {
-          // Convert to Set for O(1) lookup and find first missing number
-          const idSet = new Set(idCache.map(id => parseInt(id, 10)));
-               
-          // Start from 1 and find first missing number
-          let i = 1;
-          while (idSet.has(i)) i++;
-                
-          // Format and return the result
-          resolve(i.toString().padStart(6, '0'));
-        })
+        .withSuccessHandler(resolve)
         .withFailureHandler((error) => {
           const errorString = String(error);
                 
@@ -2198,12 +2183,8 @@
           busyFlag = false;
           reject(error);  // Reject the promise so the error propagates
         })
-      .getIDCache();
+      .getId();
     });
-  }
-
-  async function getAvailableID() {
-    cachedID = await getIDCache();
   }
 
   function saveAlert() {
@@ -2379,6 +2360,12 @@
         button1 = "Close";
         break;
 
+      case "Error: LOCK_ERROR":
+        title = errorIcon + "Data Error";
+        message = "The database is currently busy. Please wait and try your request again.";
+        button1 = "Close";
+        break;
+
       // Email errors
       case "Error: MISSING_RECIPIENT":
         title = warningIcon + "Missing Email Recipient";
@@ -2443,7 +2430,7 @@
     }
     
     playNotificationSound("alert");
-    showModal(title, message, button1, button2);
+    showAlertModal(title, message, button1, button2);
   }
   
   async function sessionError() {
@@ -2452,7 +2439,7 @@
     const message = "The current session has expired. Please sign in with Google and try again.";
     
     playNotificationSound("alert");
-    const buttonText = await showModal(title, message, "Cancel", "Sign in");
+    const buttonText = await showAlertModal(title, message, "Cancel", "Sign in");
        
     if (buttonText === "Sign in") {
       const signInUrl = "https://accounts.google.com";
