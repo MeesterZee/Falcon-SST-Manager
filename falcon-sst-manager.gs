@@ -1,4 +1,4 @@
-/** Falcon SST Manager - Web App v3.5 **/
+/** Falcon SST Manager - Web App v4.0 **/
 /** Falcon EDU © 2023-2025 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
@@ -77,8 +77,8 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 3.5<br>Build: 33.020325<br><br>Created by: Nick Zagorin<br>© 2024-2025 - All rights reserved";
-        showModal(title, message, "Close");
+        const message = "Web App Version: 4.0<br>Build: 35.082925<br><br>Created by: Nick Zagorin<br>© 2024-2026 - All rights reserved";
+        showAlertModal(title, message, "Close");
       }
     </script>
     </div>`;
@@ -140,23 +140,58 @@ function getSheetData(sheet) {
   });
 }
 
-/** Get ID cache **/
-function getIDCache() {
-  const sheets = [
-    STUDENT_DATA_SHEET,
-    MEETING_DATA_SHEET
-  ];
-    
-  const ids = sheets.reduce((acc, sheet) => {
-    const lastRow = sheet.getLastRow();
-    if (lastRow > 1) {
-      const rangeValues = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues();
-      acc.push(...rangeValues.flat());
-    }
-    return acc;
-  }, []);
+/** Get ID **/
+function getId(count = 1, sheetNames = [STUDENT_DATA_SHEET, MEETING_DATA_SHEET]) {
+  const lock = LockService.getScriptLock();
 
-  return ids;
+  try {
+    if (!lock.tryLock(3000)) {
+      throw new Error('LOCK_ERROR');
+    }
+
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get('reservedIds');
+    const reservedIds = new Set(
+      cached ? JSON.parse(cached).filter(x => !isNaN(x)).map(Number) : []
+    );
+
+    const idSet = new Set(reservedIds);
+
+    for (const sheet of sheetNames) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) continue;
+
+      // Pull column 1 starting from row 2 (skip header)
+      const idValues = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+
+      for (const [cell] of idValues) {
+        const id = Number(cell);
+        if (!isNaN(id)) idSet.add(id);
+      }
+    }
+
+    // Generate new unique IDs
+    const newIds = [];
+    let currentId = 1;
+
+    while (newIds.length < count) {
+      if (!idSet.has(currentId)) {
+        newIds.push(currentId);
+        idSet.add(currentId);
+      }
+      currentId++;
+    }
+
+    // Update cache
+    const updatedReserved = new Set([...reservedIds, ...newIds]);
+    cache.put('reservedIds', JSON.stringify([...updatedReserved]), 120); // 2 mins
+
+    const formatted = newIds.map(id => String(id).padStart(6, '0'));
+    return count === 1 ? formatted[0] : formatted;
+
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 ////////////////////
