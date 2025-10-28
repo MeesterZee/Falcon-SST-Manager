@@ -96,177 +96,194 @@
           <i class="bi bi-search search-icon"></i>
           <input type="text" id="profileSearch" placeholder="Search...">
         </div>
-        <h2 class="rounded-top">Student Information</h2>
-        <div class="no-header-table-wrapper">
-          <table class="no-header-table">
-            <tr>
-              <td>Student name:</td>
-              <td>
-                <select class="table-select" id="studentName">
-                  <!-- Populate on load -->
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Gender:</td>
-              <td>
-                <select class="table-select" id="gender">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Non-binary">Non-binary</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Date of birth:</td>
-              <td><input class="table-input" type="date" id="dateOfBirth"></td>
-            </tr>
-            <tr>
-              <td>Grade:</td>
-              <td>
-                <select class="table-select" id="grade">
-                  <option value="TK">TK</option>
-                  <option value="K">K</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                  <option value="7">7</option>
-                  <option value="8">8</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Classroom/teacher:</td>
-              <td>
-                <select class="table-select" id="classroom">
-                  <!-- Populate on load -->
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Allergies:</td>
-              <td><input class="table-input" type="text" id="allergies"></input></td>
-            </tr>
-            <tr>
-              <td>Medications:</td>
-              <td><input class="table-input" type="text" id="medications"></input></td>
-            </tr>
-            <tr>
-              <td>Dietary restrictions:</td>
-              <td><input class="table-input" type="text" id="dietaryRestrictions"></input></td>
-            </tr>
-            <tr>
-              <td>Diagnosis:</td>
-              <td>
-                <select class="table-select" id="diagnosis">
-                  <option value="ADHD (Attention Deficit Hyperactivity Disorder)">ADHD (Attention Deficit Hyperactivity Disorder)</option>
-                  <option value="APD (Auditory Processing Disorder)">APD (Auditory Processing Disorder)</option>
-                  <option value="ASD (Autism Spectrum Disorder)">ASD (Autism Spectrum Disorder)</option>
-                  <option value="DD (Developmental Delay)">DD (Developmental Delay)</option>
-                  <option value="DS (Down Syndrome)">DS (Down Syndrome)</option>
-                  <option value="EBD (Emotional and Behavioral Disorders)">EBD (Emotional and Behavioral Disorders)
-                  <option value="ED (Emotional Disturbance)">ED (Emotional Disturbance)</option>
-                  </option>
-                  <option value="HI (Hearing Impairment)">HI (Hearing Impairment)</option>
-                  <option value="ID (Intellectual Disability)">ID (Intellectual Disability)</option>
-                  <option value="LD (Language Disorder)">LD (Language Disorder)</option>
-                  <option value="MD (Multiple Disabilities)">MD (Multiple Disabilities)</option>
-                  <option value="OHI (Other Health Impairment)">OHI (Other Health Impairment)</option>
-                  <option value="OI (Orthopedic Impairment)">OI (Orthopedic Impairment)</option>
-                  <option value="SLD (Specific Learning Disorder)">SLD (Specific Learning Disorder)</option>
-                  <option value="TBI (Traumatic Brain Injury)">TBI (Traumatic Brain Injury)</option>
-                  <option value="VI (Visual Impairment)">VI (Visual Impairment)</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Services/programs:</td>
-              <td><input class="table-input" type="text" id="servicesPrograms"></input></td>
-            </tr>
-            <tr>
-              <td>Aide:</td>
-              <td>
-                <select class="table-select" id="aide">
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time (AM)">Part-time (AM)</option>
-                  <option value="Part-time (PM)">Part-time (PM)</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Specialized instruction:</td>
-              <td>
-                <select class="table-select" id="specializedInstruction">
-                  <option value="504">504</option>
-                  <option value="IEP">IEP</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Case manager:</td>
-              <td><input class="table-input" type="text" id="caseManager"></td>
-            </tr>
-          </table>
-        </div>
-        <h2 class="rounded-top">Release Of Information</h2>
-        <div class="no-header-table-wrapper">
-          <table class="no-header-table">
-            <tr>
-              <td>ROI organization:</td>
-              <td><input class="table-input" type="text" id="roi1"></input></td>
-            </tr>
-            <tr>
-              <td>ROI organization:</td>
-              <td><input class="table-input" type="text" id="roi2"></input></td>
-            </tr>
-            <tr>
-              <td>ROI organization:</td>
-              <td><input class="table-input" type="text" id="roi3"></input></td>
-            </tr>
+
+        <details open>
+          <summary>Student Information</summary>
+          <div class="no-header-table-wrapper">
+            <table class="no-header-table">
+              <tr>
+                <td>Student name:</td>
+                <td>
+                  <select class="table-select" id="studentName">
+                    <!-- Populate on load -->
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Gender:</td>
+                <td>
+                  <select class="table-select" id="gender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Date of birth:</td>
+                <td><input class="table-input" type="date" id="dateOfBirth"></td>
+              </tr>
+              <tr>
+                <td>Grade:</td>
+                <td>
+                  <select class="table-select" id="grade">
+                    <option value="TK">TK</option>
+                    <option value="K">K</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Classroom/teacher:</td>
+                <td>
+                  <select class="table-select" id="classroom">
+                    <!-- Populate on load -->
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Allergies:</td>
+                <td><input class="table-input" type="text" id="allergies"></input></td>
+              </tr>
+              <tr>
+                <td>Medications:</td>
+                <td><input class="table-input" type="text" id="medications"></input></td>
+              </tr>
+              <tr>
+                <td>Dietary restrictions:</td>
+                <td><input class="table-input" type="text" id="dietaryRestrictions"></input></td>
+              </tr>
+              <tr>
+                <td>Diagnosis:</td>
+                <td>
+                  <select class="table-select" id="diagnosis">
+                    <option value="ADHD (Attention Deficit Hyperactivity Disorder)">ADHD (Attention Deficit Hyperactivity Disorder)</option>
+                    <option value="APD (Auditory Processing Disorder)">APD (Auditory Processing Disorder)</option>
+                    <option value="ASD (Autism Spectrum Disorder)">ASD (Autism Spectrum Disorder)</option>
+                    <option value="DD (Developmental Delay)">DD (Developmental Delay)</option>
+                    <option value="DS (Down Syndrome)">DS (Down Syndrome)</option>
+                    <option value="EBD (Emotional and Behavioral Disorders)">EBD (Emotional and Behavioral Disorders)
+                    <option value="ED (Emotional Disturbance)">ED (Emotional Disturbance)</option>
+                    </option>
+                    <option value="HI (Hearing Impairment)">HI (Hearing Impairment)</option>
+                    <option value="ID (Intellectual Disability)">ID (Intellectual Disability)</option>
+                    <option value="LD (Language Disorder)">LD (Language Disorder)</option>
+                    <option value="MD (Multiple Disabilities)">MD (Multiple Disabilities)</option>
+                    <option value="OHI (Other Health Impairment)">OHI (Other Health Impairment)</option>
+                    <option value="OI (Orthopedic Impairment)">OI (Orthopedic Impairment)</option>
+                    <option value="SLD (Specific Learning Disorder)">SLD (Specific Learning Disorder)</option>
+                    <option value="TBI (Traumatic Brain Injury)">TBI (Traumatic Brain Injury)</option>
+                    <option value="VI (Visual Impairment)">VI (Visual Impairment)</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Services/programs:</td>
+                <td><input class="table-input" type="text" id="servicesPrograms"></input></td>
+              </tr>
+              <tr>
+                <td>Aide:</td>
+                <td>
+                  <select class="table-select" id="aide">
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time (AM)">Part-time (AM)</option>
+                    <option value="Part-time (PM)">Part-time (PM)</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Specialized instruction:</td>
+                <td>
+                  <select class="table-select" id="specializedInstruction">
+                    <option value="504">504</option>
+                    <option value="IEP">IEP</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Case manager:</td>
+                <td><input class="table-input" type="text" id="caseManager"></td>
+              </tr>
             </table>
-        </div>
-        <h2 class="rounded-top">Parent/Guardian Information</h2>
-        <div class="no-header-table-wrapper">
-          <table class="no-header-table">
-            <tr>
-              <td>Parent/guardian name:</td>
-              <td><input class="table-input" type="text" id="parentGuardianName1"></td>
-            </tr>
-            <tr>
-              <td>Parent/guardian phone:</td>
-              <td><input class="table-input" type="text" id="parentGuardianPhone1"></td>
-            </tr>
-            <tr>
-              <td>Parent/guardian email:</td>
-              <td><input class="table-input" type="text" id="parentGuardianEmail1"></td>
-            </tr>
-          </table>
-        </div>
-        <h2 class="rounded-top">Parent/Guardian Information</h2>
-        <div class="no-header-table-wrapper">
-          <table class="no-header-table">
-            <tr>
-              <td>Parent/guardian name:</td>
-              <td><input class="table-input" type="text" id="parentGuardianName2"></td>
-            </tr>
-            <tr>
-              <td>Parent/guardian phone:</td>
-              <td><input class="table-input" type="text" id="parentGuardianPhone2"></td>
-            </tr>
-            <tr>
-              <td>Parent/guardian email:</td>
-              <td><input class="table-input" type="text" id="parentGuardianEmail2"></td>
-            </tr>
-          </table>
-        </div>
-        <h2 class="rounded-top">Notes</h2>
-        <textarea class="column-textarea" style="margin: 0" id="notes"></textarea>
-      </div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Release Of Information</summary>
+          <div class="no-header-table-wrapper">
+            <table class="no-header-table">
+              <tr>
+                <td>ROI organization:</td>
+                <td><input class="table-input" type="text" id="roi1"></td>
+              </tr>
+              <tr>
+                <td>ROI organization:</td>
+                <td><input class="table-input" type="text" id="roi2"></td>
+              </tr>
+              <tr>
+                <td>ROI organization:</td>
+                <td><input class="table-input" type="text" id="roi3"></td>
+              </tr>
+            </table>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Parent/Guardian Information</summary>
+          <div class="no-header-table-wrapper">
+            <table class="no-header-table">
+              <tr>
+                <td>Parent/guardian name:</td>
+                <td><input class="table-input" type="text" id="parentGuardianName1"></td>
+              </tr>
+              <tr>
+                <td>Parent/guardian phone:</td>
+                <td><input class="table-input" type="text" id="parentGuardianPhone1"></td>
+              </tr>
+              <tr>
+                <td>Parent/guardian email:</td>
+                <td><input class="table-input" type="text" id="parentGuardianEmail1"></td>
+              </tr>
+            </table>
+          </div>
+        </details>
+
+
+        <details open>
+          <summary>Parent/Guardian Information</summary>
+          <div class="no-header-table-wrapper">
+            <table class="no-header-table">
+              <tr>
+                <td>Parent/guardian name:</td>
+                <td><input class="table-input" type="text" id="parentGuardianName2"></td>
+              </tr>
+              <tr>
+                <td>Parent/guardian phone:</td>
+                <td><input class="table-input" type="text" id="parentGuardianPhone2"></td>
+              </tr>
+              <tr>
+                <td>Parent/guardian email:</td>
+                <td><input class="table-input" type="text" id="parentGuardianEmail2"></td>
+              </tr>
+            </table>
+          </div>
+        </details>
+
+        <details open style="margin-bottom: 0px">
+          <summary>Notes</summary>
+          <textarea class="column-textarea" style="margin: 0" id="notes"></textarea>
+        </details>
       </div>
     </div>
+  </div>
+    
 
     <!-- MEETINGS COLUMN -->
     <div class="column">
@@ -278,60 +295,75 @@
         </div>
         <div id="meetingDataTable">
         <select class="column-select" style="margin-bottom: 20px" id="meetingName"></select>
-        <h2 class="rounded-top">Meeting Information</h2>
-        <div class="no-header-table-wrapper">
-          <table class="no-header-table">
-            <tr>
-              <td>Date:</td>
-              <td><input class="table-input" type="date" id="meetingDate"></td>
-            </tr>
-            <tr>
-              <td>Type:</td>
-              <td>
-                <select class="table-select" id="meetingType">
-                  <option value="Initial">Initial</option>
-                  <option value="Check-in">Check-in</option>
-                  <option value="End of Year">End of year</option>
-                  <option value="Consultation">Consultation</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <td>Attendees:</td>
-              <td><input class="table-input" type="text" id="attendees"></td>
-            </tr>
-            <tr>
-              <td>Facilitator:</td>
-              <td><input class="table-input" type="text" id="facilitator"></td>
-            </tr>
-            <tr>
-              <td>Scribe:</td>
-              <td><input class="table-input" type="text" id="scribe"></td>
-            </tr>
-          </table>
-        </div>
-        <h2 class="rounded-top">Student Strengths</h2>
-        <textarea class="column-textarea" id="strengthsInput"></textarea>
-        <h2 class="rounded-top">Student Concerns</h2>
-        <textarea class="column-textarea" id="concernsInput"></textarea>
-        <h2 class="rounded-top">Student Action Plan</h2>
-        <textarea class="column-textarea" id="actionPlanInput"></textarea>
-        <h2 class="rounded-top">Schedule Meeting</h2>
-        <div class="no-header-table-wrapper" style="margin-bottom: 0;">
-          <table class="no-header-table">
-            <tr>
-              <td>Next meeting date:</td>
-              <td><input class="table-input" type="date" id="nextDate"></td>
-            </tr>
-            <tr>
-              <td>Next meeting time:</td>
-              <td><input class="table-input" type="time" id="nextTime"></td>
-            </tr>
-          </table>
-        </div>
-        </div>
+        
+        <details open>
+          <summary>Meeting Information</summary>
+          <div class="no-header-table-wrapper">
+            <table class="no-header-table">
+              <tr>
+                <td>Date:</td>
+                <td><input class="table-input" type="date" id="meetingDate"></td>
+              </tr>
+              <tr>
+                <td>Type:</td>
+                <td>
+                  <select class="table-select" id="meetingType">
+                    <option value="Initial">Initial</option>
+                    <option value="Check-in">Check-in</option>
+                    <option value="End of Year">End of year</option>
+                    <option value="Consultation">Consultation</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td>Attendees:</td>
+                <td><input class="table-input" type="text" id="attendees"></td>
+              </tr>
+              <tr>
+                <td>Facilitator:</td>
+                <td><input class="table-input" type="text" id="facilitator"></td>
+              </tr>
+              <tr>
+                <td>Scribe:</td>
+                <td><input class="table-input" type="text" id="scribe"></td>
+              </tr>
+            </table>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Student Strengths</summary>
+          <textarea class="column-textarea" id="strengthsInput"></textarea>
+        </details>
+
+        <details open>
+          <summary>Student Concerns</summary>
+          <textarea class="column-textarea" id="concernsInput"></textarea>
+        </details>
+
+        <details open>
+          <summary>Student Action Plan</summary>
+          <textarea class="column-textarea" id="actionPlanInput"></textarea>
+        </details>
+
+        <details open style="margin-bottom: 0px">
+          <summary>Schedule Meeting</summary>
+          <div class="no-header-table-wrapper" style="margin-bottom: 0;">
+            <table class="no-header-table">
+              <tr>
+                <td>Next meeting date:</td>
+                <td><input class="table-input" type="date" id="nextDate"></td>
+              </tr>
+              <tr>
+                <td>Next meeting time:</td>
+                <td><input class="table-input" type="time" id="nextTime"></td>
+              </tr>
+            </table>
+          </div>
+        </details>
       </div>
     </div>
+  </div>
 
     <!-- MODALS -->
 
@@ -1002,7 +1034,7 @@
         <div class="sidebar-content" id="helpSidebar">
           <details>
             <summary>Annual Meeting Timeline</summary>
-            <div class="section-container" style="margin-top: 10px; margin-bottom: 0;">
+            <div class="section-container" style="margin-bottom: 0;">
               <div class="section-title gray">Beginning of Year (September)</div>
               <div class="section-content">
                 <ul>
@@ -1107,7 +1139,7 @@
           <details>
             <summary style="margin-bottom: 0">SST Roles</summary>
             <div class="section-container">
-              <div class="section-title gray" style="margin-top: 10px">Intervention Specialist</div>
+              <div class="section-title gray">Intervention Specialist</div>
               <div class="section-content">
                 <i>The Intervention Specialist supports teachers and the SST team by identifying student needs, guiding targeted interventions, and ensuring data-driven progress monitoring.</i>
                 <ul>
