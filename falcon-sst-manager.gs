@@ -1,5 +1,5 @@
-/** Falcon SST Manager - Web App v4.0 **/
-/** Falcon EDU © 2023-2025 All Rights Reserved **/
+/** Falcon SST Manager - Web App v4.1.1 **/
+/** Falcon EDU © 2023-2026 All Rights Reserved **/
 /** Created by: Nick Zagorin **/
 
 //////////////////////
@@ -77,7 +77,7 @@ function getNavbar(activePage) {
 
       function showAbout() {
         const title = "<i class='bi bi-info-circle'></i>About Falcon SST Manager";
-        const message = "Web App Version: 4.0<br>Build: 35.082925<br><br>Created by: Nick Zagorin<br>© 2024-2026 - All rights reserved";
+        const message = "Web App Version: 4.1.1<br>Build: 40.102825<br><br>Created by: Nick Zagorin<br>© 2024-2026 - All rights reserved";
         showAlertModal(title, message, "Close");
       }
     </script>
@@ -536,11 +536,6 @@ function deleteStudentData(studentID, studentStatus) {
 
   return true;
 }
-
-//////////
-//////////
-//////////
-//////////
 
 /** Delete a single meeting from data **/
 function deleteMeetingData(meetingID) {
