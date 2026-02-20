@@ -1329,7 +1329,7 @@
     // Reset the warning before the modal is opened
     document.getElementById('templateWarning').style.display = 'none';
     showActionModal("composeEmailModal");
-    getEmailTemplate();
+    //getEmailTemplate();
 
     const composeEmailModalButton = document.getElementById('composeEmailModalButton');
     composeEmailModalButton.onclick = async function() {
@@ -1392,17 +1392,17 @@
           })
           .withFailureHandler((error) => {
             const errorString = String(error);
-        
+            
             if (errorString.includes("401")) {
               sessionError();
             } else {
               showError(error.message);
             }
-
+            
             busyFlag = false;
           })
         .createEmail(recipient, subject, body, attachmentType, attachments);
-      } catch {
+      } catch (error) {
         showError("Error: EMAIL_FAILURE");
         busyFlag = false;
       }
@@ -1770,22 +1770,24 @@
 
   async function generateMeetingSummaryPDF(meetingSummaryData) {
     const docDefinition = createMeetingSummary(meetingSummaryData);
-    const blob = await new Promise((resolve, reject) => {
-      pdfMake.createPdf(docDefinition).getBlob(resolve);
-    });
+    const blob = await pdfMake.createPdf(docDefinition).getBlob();
+
     const arrayBuffer = await blob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    return Array.from(uint8Array); // Convert to array for google.script.run
+
+    // return raw byte array (Apps Script / email-safe)
+    return Array.from(uint8Array);
   }
 
   async function generateReferralPDF(referralData) {
     const docDefinition = createReferral(referralData);
-    const blob = await new Promise((resolve, reject) => {
-      pdfMake.createPdf(docDefinition).getBlob(resolve);
-    });
+    const blob = await pdfMake.createPdf(docDefinition).getBlob();
+
     const arrayBuffer = await blob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    return Array.from(uint8Array); // Convert to array for google.script.run
+
+    // return raw byte array (Apps Script / email-safe)
+    return Array.from(uint8Array);
   }
 
   ////////////////////
@@ -1843,15 +1845,19 @@
       closeActionModal("exportMeetingModal");
 
       setTimeout(function() {
-        pdfMake.createPdf(createMeetingSummary(meetingSummaryData)).download('First Lutheran School - SST Meeting Summary.pdf');
-        
-        playNotificationSound("success");
-        showToast("", "Meeting exported successfully!", 5000);
-        busyFlag = false;
-      }, 100); // Short delay to allow UI update to process before PDF generation
-    };
+        const pdfDoc = pdfMake.createPdf(createMeetingSummary(meetingSummaryData));
 
-    
+        pdfDoc.download('First Lutheran School - SST Meeting Summary.pdf')
+          .then(() => {
+            playNotificationSound("success");
+            showToast("", "Meeting exported successfully!", 5000);
+          })
+          .finally(() => {
+            busyFlag = false;
+          });
+
+      }, 100);
+    };
   }
 
   /////////////////
@@ -1898,6 +1904,8 @@
               a.download = fileName + '.csv';
               a.click();
               busyFlag = false;
+              playNotificationSound("success");
+              showToast("", "Data exported successfully!", 5000);
             })
             .withFailureHandler((error) => {
               const errorString = String(error);
