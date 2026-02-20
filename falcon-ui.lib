@@ -1,4 +1,4 @@
-<!-- FALCON UI LIBRARY v3.4 -->
+<!-- FALCON UI LIBRARY v3.5 -->
 <!--
   Falcon UI Usage Help:
     Transitions: 0.2s
@@ -1193,8 +1193,29 @@
   /*****************/
   /* DETAILS CLASS */
   /*****************/
-  details summary {
-    font-size: 18px;
+  .column details {
+    margin-bottom: 20px;
+  }
+
+  .column details summary {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-primary-color);
+    background-color: var(--element-accent-color);
+    border: none;
+    padding: 5px 15px 5px 15px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+
+  .column details[open] summary {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+    
+  .sidebar details summary {
+    font-size: 16px;
     font-weight: bold;
     color: var(--text-primary-color);
     background-color: var(--element-accent-color);
@@ -1202,20 +1223,12 @@
     padding: 5px 15px 5px 15px;
     text-align: left;
     cursor: pointer;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     border-radius: 10px;
-    transition: all 0.5s;
-  }
-
-  details summary:hover {
-    background-color: var(--accent-color);
-  }
-
-  details[open] summary {
-    background-color: var(--accent-color);
   }
 
   .section-container {
+    margin-top: 20px;
     border-radius: 10px;
     overflow: hidden;
   }
